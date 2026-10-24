@@ -46,7 +46,7 @@
         type="text" 
         id="search-input" 
         placeholder="Search tasks, notes, or employee names..." 
-        class="w-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 px-4 py-1.5 rounded-xl text-sm border-0 focus:ring-2 focus:ring-blue-500 outline-none"
+        class="w-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:white placeholder-slate-400 px-4 py-1.5 rounded-xl text-sm border-0 focus:ring-2 focus:ring-blue-500 outline-none"
       />
     </div>
 
@@ -142,7 +142,7 @@
           <input 
             type="text" 
             id="quick-task-title" 
-            placeholder="Add task... (e.g. Sierra sync on album) [Press Enter]" 
+            placeholder="Add task... Format: John Doe - 01/01/1970 - jdoe@domain.com [Press Enter]" 
             onkeypress="if(event.key==='Enter') quickAddTask()"
             class="flex-1 bg-transparent px-3 py-1.5 text-sm outline-none text-slate-800 dark:text-slate-100 placeholder-slate-400"
           />
@@ -202,8 +202,10 @@
       <form id="task-form" onsubmit="handleTaskFormSubmit(event)" class="mt-4 space-y-4">
         <input type="hidden" id="form-task-id" />
         <div>
-          <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Title (First word should be employee name) *</label>
-          <input type="text" id="form-title" required placeholder="e.g., Sierra weekly check-in" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
+          <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+            Task Name * <span class="text-blue-600 dark:text-blue-400 font-normal">(Format: FullName - BirthDate - PrimaryEmail)</span>
+          </label>
+          <input type="text" id="form-title" required placeholder="John Doe - 01/01/1970 - jdoe@domainname.com" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -219,9 +221,9 @@
 
         <div>
           <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-            Notes / Details <span class="text-blue-600 dark:text-blue-400 font-normal">(Line 1: their email address)</span>
+            Notes / Details <span class="text-slate-400 font-normal">(Optional context)</span>
           </label>
-          <textarea id="form-notes" rows="5" placeholder="sierra@sierramilesmusic.com&#10;Discussion details and agenda items..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 font-sans"></textarea>
+          <textarea id="form-notes" rows="4" placeholder="Additional notes or context for this person..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 font-sans"></textarea>
         </div>
 
         <div class="pt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800">
@@ -264,16 +266,16 @@
       {
         id: 't-1',
         listId: 'list-default',
-        title: 'Sierra sync on music project',
-        notes: "sierra@sierramilesmusic.com\nDiscuss timeline and next deliverables.",
+        title: 'Sierra Miles - 05/14/1995 - sierra@sierramilesmusic.com',
+        notes: "Discuss music projects and upcoming schedule.",
         due: new Date().toISOString(),
         status: 'needsAction'
       },
       {
         id: 't-2',
         listId: 'list-default',
-        title: 'David review marketing designs',
-        notes: "david@company.com\nReview draft banners for the Q4 launch.",
+        title: 'David Smith - 11/20/1988 - david@company.com',
+        notes: "Review draft deliverables.",
         due: new Date().toISOString(),
         status: 'needsAction'
       }
@@ -308,18 +310,27 @@
       }
     }
 
+    // Extracts first name from: "FullName - BirthDate - PrimaryEmail"
     function extractFirstName(title) {
       if (!title) return 'there';
-      const cleaned = title.trim().replace(/^[^a-zA-Z]+/, '');
-      const firstWord = cleaned.split(/[\s,:-]+/)[0];
+      const namePart = title.split('-')[0].trim();
+      const cleaned = namePart.replace(/^[^a-zA-Z]+/, '');
+      const firstWord = cleaned.split(/[\s,]+/)[0];
       return firstWord ? (firstWord.charAt(0).toUpperCase() + firstWord.slice(1).toLowerCase()) : 'there';
     }
 
-    function extractEmailFromNotes(notes) {
-      if (!notes) return '';
-      const firstLine = notes.split('\n')[0].trim();
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      return emailRegex.test(firstLine) ? firstLine : '';
+    // Extracts email from: "FullName - BirthDate - PrimaryEmail"
+    function extractEmailFromTitle(title) {
+      if (!title) return '';
+      const parts = title.split('-');
+      if (parts.length >= 3) {
+        const candidate = parts[parts.length - 1].trim();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (emailRegex.test(candidate)) return candidate;
+      }
+      // Fallback: search for any standard email pattern in the title string
+      const match = title.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+      return match ? match[0].trim() : '';
     }
 
     function getNextBusinessDateISO() {
@@ -630,7 +641,7 @@
       const recipients = [];
       selectedTasks.forEach(task => {
         const firstName = extractFirstName(task.title);
-        const email = extractEmailFromNotes(task.notes);
+        const email = extractEmailFromTitle(task.title);
         if (email) {
           recipients.push({
             email: email,
@@ -714,7 +725,7 @@
         const listName = list ? list.title : 'Tasks';
         const isSelected = selectedTaskIds.has(task.id);
         const firstName = extractFirstName(task.title);
-        const extractedEmail = extractEmailFromNotes(task.notes);
+        const extractedEmail = extractEmailFromTitle(task.title);
 
         let dueBadge = '';
         if (task.due) {
@@ -747,7 +758,7 @@
 
         const emailBadge = extractedEmail 
           ? `<span class="inline-flex items-center text-xs font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-md">✉️ ${escapeHtml(extractedEmail)}</span>`
-          : `<span class="inline-flex items-center text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-md">⚠️ No Email in Note Line 1</span>`;
+          : `<span class="inline-flex items-center text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-md">⚠️ No Email in Task Title</span>`;
 
         taskCard.innerHTML = `
           <input 
