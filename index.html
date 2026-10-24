@@ -272,7 +272,6 @@
             originalStartDate: emp['Original Start Date'] || emp.OriginalStartDate || emp.originalStartDate || '',
             jobTitle: emp['Job Title'] || emp.JobTitle || emp.jobTitle || emp.Title || '',
             department: emp.Department || emp.department || '',
-            picturePath: emp['Picture Path'] || emp.PicturePath || emp.picturePath || emp.Avatar || emp.Photo || '',
             managerName: emp['Manager Name'] || emp.ManagerName || emp.managerName || emp.Manager || '',
             employeeAddress: emp['Employee Address'] || emp.EmployeeAddress || emp.employeeAddress || emp.Address || ''
           };
@@ -667,7 +666,7 @@
     }
 
     // ========================================================
-    // RENDER TASKS (LEFT-JUSTIFIED & VERTICALLY ALIGNED)
+    // RENDER TASKS (CLEAN LEFT-ALIGNED METADATA)
     // ========================================================
     function renderTasks() {
       const container = document.getElementById('tasks-container');
@@ -714,15 +713,6 @@
         const hireDate = formatDateFriendly(strivenData.hireDate || strivenData.originalStartDate);
         const managerName = strivenData.managerName || '';
         const employeeAddress = strivenData.employeeAddress || '';
-        const picturePath = strivenData.picturePath || '';
-
-        // Initials fallback
-        const initials = fullName
-          .split(' ')
-          .map(n => n[0])
-          .slice(0, 2)
-          .join('')
-          .toUpperCase() || '👤';
 
         // Due date badge
         let dueBadge = '';
@@ -775,11 +765,6 @@
           </button>
         ` : '';
 
-        // Fixed-width photo or placeholder slot for consistent vertical alignment
-        const avatarSlot = picturePath
-          ? `<img src="${escapeHtml(picturePath)}" alt="${escapeHtml(fullName)}" class="w-12 h-12 rounded-2xl object-cover shrink-0 border border-slate-200 dark:border-slate-700 shadow-xs" onerror="this.outerHTML='<div class=\\'w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center font-bold text-xs tracking-wider shrink-0 border border-slate-200/60 dark:border-slate-700/60\\'>${initials}</div>'" />`
-          : `<div class="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center font-bold text-xs tracking-wider shrink-0 border border-slate-200/60 dark:border-slate-700/60">${initials}</div>`;
-
         const roleDeptText = (jobTitle || department) 
           ? `<p class="text-xs font-medium text-slate-500 dark:text-slate-400 leading-tight text-left mt-0.5">
                ${escapeHtml(jobTitle)}${jobTitle && department ? ' • ' : ''}${escapeHtml(department)}
@@ -826,12 +811,7 @@
             </button>
           </div>
 
-          <!-- Fixed-Width Avatar Slot -->
-          <div class="w-12 h-12 shrink-0 flex items-center justify-center">
-            ${avatarSlot}
-          </div>
-
-          <!-- Flush Left-Aligned Employee Content Column -->
+          <!-- Flush Left-Aligned Content Column -->
           <div class="flex-1 min-w-0 cursor-pointer btn-open-edit text-left">
             <div class="flex items-start justify-between gap-3">
               <div class="min-w-0 text-left">
