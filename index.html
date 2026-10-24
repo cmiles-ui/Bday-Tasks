@@ -9,7 +9,7 @@
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Google Identity Services -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://accounts.google.com/gsi/client" async defer onload="onGsiLoaded()"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -79,7 +79,7 @@
         <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
       </button>
       <div id="auth-container">
-        <button id="auth-btn" class="flex items-center space-x-2 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition-all">
+        <button id="auth-btn" class="flex items-center space-x-2 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition-all cursor-pointer">
           <i data-lucide="log-in" class="w-4 h-4"></i>
           <span>Connect Google</span>
         </button>
@@ -93,7 +93,7 @@
       <i data-lucide="info" class="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400"></i>
       <span id="banner-text">Viewing offline sample tasks. Connect your Google account to manage your live tasks.</span>
     </div>
-    <button id="banner-action-btn" class="font-semibold underline ml-3 shrink-0 hover:text-amber-900 dark:hover:text-amber-100">
+    <button id="banner-action-btn" class="font-semibold underline ml-3 shrink-0 hover:text-amber-900 dark:hover:text-amber-100 cursor-pointer">
       Sign In
     </button>
   </div>
@@ -256,4 +256,67 @@
 
   <!-- SCRIPT -->
   <script>
-    const GOOGLE_CLIENT_ID = '9488
+    const GOOGLE_CLIENT_ID = '948841075409-efkhae14gj3g5bf0pmld92329t3i9k6o.apps.googleusercontent.com';
+    const SCOPES = 'https://www.googleapis.com/auth/tasks';
+
+    let tokenClient = null;
+    let accessToken = localStorage.getItem('gtasks_access_token') || null;
+    let isLiveAccount = false;
+    let currentFilter = 'all-open';
+    let searchQuery = '';
+    let sortOption = 'due-asc';
+
+    let taskLists = [];
+    let allTasks = [];
+
+    const DEMO_LISTS = [
+      { id: 'list-default', title: 'My Tasks' },
+      { id: 'list-work', title: 'Work & Projects' },
+      { id: 'list-personal', title: 'Personal & Habits' }
+    ];
+
+    const DEMO_TASKS = [
+      {
+        id: 't-1',
+        listId: 'list-work',
+        title: 'Review Q4 Architecture Plan',
+        notes: "Detailed requirements:\n- Verify security compliance across API endpoints\n- Check database index performance under peak load\n- Align with product management timeline\nReference documentation: https://cloud.google.com/tasks",
+        due: new Date(Date.now() + 86400000).toISOString(),
+        status: 'needsAction'
+      },
+      {
+        id: 't-2',
+        listId: 'list-default',
+        title: 'Pay utility bills and review bank statement',
+        notes: "Electricity and Internet due by the end of the week.\nCheck statement for unusual subscription charges.",
+        due: new Date().toISOString(),
+        status: 'needsAction'
+      },
+      {
+        id: 't-3',
+        listId: 'list-personal',
+        title: 'Grocery shopping for the weekend meal prep',
+        notes: "Items needed:\n1. Fresh vegetables (spinach, carrots, broccoli)\n2. Chicken breast & Greek yogurt\n3. Olive oil, almonds, sourdough bread",
+        due: new Date(Date.now() - 86400000).toISOString(),
+        status: 'needsAction'
+      }
+    ];
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initTheme();
+      setupEventListeners();
+      
+      if (accessToken) {
+        verifyAndFetchData();
+      } else {
+        loadDemoData();
+      }
+    });
+
+    // Callback when Google's Identity library loads
+    function onGsiLoaded() {
+      try {
+        tokenClient = google.accounts.oauth2.initTokenClient({
+          client_id: GOOGLE_CLIENT_ID,
+          scope: SCOPES,
+          callback: async (tokenResponse)
