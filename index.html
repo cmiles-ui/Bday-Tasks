@@ -6,10 +6,8 @@
   <title>Google Tasks Dashboard</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Google Identity Services -->
-  <script src="https://accounts.google.com/gsi/client" async defer onload="onGsiLoaded()"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -43,11 +41,11 @@
   <header class="shrink-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 lg:px-6 py-3 flex items-center justify-between z-20">
     <div class="flex items-center space-x-3">
       <button id="mobile-menu-btn" class="lg:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300">
-        <i data-lucide="menu" class="w-5 h-5"></i>
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
       </button>
       <div class="flex items-center space-x-2.5">
         <div class="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm shadow-blue-500/30">
-          <i data-lucide="check-square" class="w-5 h-5"></i>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
         </div>
         <div>
           <h1 class="text-base font-bold tracking-tight leading-none text-slate-900 dark:text-white">Tasks Studio</h1>
@@ -59,15 +57,15 @@
     <!-- Center Search Bar -->
     <div class="hidden md:flex items-center flex-1 max-w-md mx-6">
       <div class="relative w-full">
-        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+        <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
         <input 
           type="text" 
           id="search-input" 
           placeholder="Search open tasks, notes, or tags..." 
-          class="w-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 pl-9 pr-4 py-1.5 rounded-xl text-sm border-0 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+          class="w-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 pl-9 pr-8 py-1.5 rounded-xl text-sm border-0 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
         />
         <button id="clear-search" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
-          <i data-lucide="x" class="w-3.5 h-3.5"></i>
+          ✕
         </button>
       </div>
     </div>
@@ -75,13 +73,14 @@
     <!-- Right Controls -->
     <div class="flex items-center space-x-2">
       <button id="theme-toggle" class="p-2 rounded-xl text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors" title="Toggle Theme">
-        <i data-lucide="moon" class="w-5 h-5 dark:hidden"></i>
-        <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+        <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+        <svg class="w-5 h-5 hidden dark:block text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
       </button>
+      
       <div id="auth-container">
-        <button id="auth-btn" class="flex items-center space-x-2 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition-all cursor-pointer">
-          <i data-lucide="log-in" class="w-4 h-4"></i>
-          <span>Connect Google</span>
+        <button id="auth-btn" onclick="startGoogleAuth()" class="flex items-center space-x-2 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-semibold shadow-sm transition-all cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
+          <span id="auth-btn-label">Connect Google</span>
         </button>
       </div>
     </div>
@@ -90,10 +89,10 @@
   <!-- BANNER -->
   <div id="status-banner" class="shrink-0 bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-900/50 px-4 py-2 text-xs text-amber-800 dark:text-amber-300 flex items-center justify-between z-10">
     <div class="flex items-center space-x-2 truncate">
-      <i data-lucide="info" class="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400"></i>
+      <span class="font-bold">ℹ️</span>
       <span id="banner-text">Viewing offline sample tasks. Connect your Google account to manage your live tasks.</span>
     </div>
-    <button id="banner-action-btn" class="font-semibold underline ml-3 shrink-0 hover:text-amber-900 dark:hover:text-amber-100 cursor-pointer">
+    <button id="banner-action-btn" onclick="startGoogleAuth()" class="font-semibold underline ml-3 shrink-0 hover:text-amber-900 dark:hover:text-amber-100 cursor-pointer">
       Sign In
     </button>
   </div>
@@ -109,21 +108,21 @@
       <div class="px-2 py-3 space-y-0.5">
         <button data-filter="all-open" class="filter-btn active w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-colors bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
           <div class="flex items-center space-x-2.5">
-            <i data-lucide="inbox" class="w-4 h-4"></i>
+            <span>📥</span>
             <span>All Open Tasks</span>
           </div>
           <span id="count-all-open" class="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-800/50 font-semibold">0</span>
         </button>
         <button data-filter="today" class="filter-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-colors text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60">
           <div class="flex items-center space-x-2.5">
-            <i data-lucide="calendar" class="w-4 h-4 text-emerald-500"></i>
+            <span>📅</span>
             <span>Due Today</span>
           </div>
           <span id="count-today" class="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 font-semibold">0</span>
         </button>
         <button data-filter="overdue" class="filter-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-colors text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60">
           <div class="flex items-center space-x-2.5">
-            <i data-lucide="alert-circle" class="w-4 h-4 text-rose-500"></i>
+            <span>⚠️</span>
             <span>Overdue</span>
           </div>
           <span id="count-overdue" class="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 font-semibold">0</span>
@@ -133,7 +132,7 @@
       <div class="mt-4 px-4 flex items-center justify-between">
         <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Lists</h2>
         <button id="add-list-btn" class="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800" title="New List">
-          <i data-lucide="plus" class="w-4 h-4"></i>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
         </button>
       </div>
 
@@ -142,7 +141,7 @@
       <div class="p-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-400">
         <span id="sync-status">Ready</span>
         <button id="refresh-btn" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300" title="Refresh Tasks">
-          <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
         </button>
       </div>
     </aside>
@@ -167,9 +166,8 @@
               <option value="list">Sort: By List</option>
             </select>
 
-            <button id="btn-open-new-task" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition-all">
-              <i data-lucide="plus" class="w-4 h-4"></i>
-              <span>New Task</span>
+            <button id="btn-open-new-task" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition-all cursor-pointer">
+              <span>+ New Task</span>
             </button>
           </div>
         </div>
@@ -177,7 +175,7 @@
         <!-- Quick Add Bar -->
         <div class="relative bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-2 flex items-center transition-all focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500">
           <div class="pl-2 pr-1 text-slate-400">
-            <i data-lucide="plus-circle" class="w-5 h-5"></i>
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3-3H9m12 3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
           </div>
           <input 
             type="text" 
@@ -185,16 +183,16 @@
             placeholder="Add an open task quickly... (Press Enter)" 
             class="flex-1 bg-transparent px-2 py-1.5 text-sm outline-none text-slate-800 dark:text-slate-100 placeholder-slate-400"
           />
-          <button id="quick-task-submit" class="p-1.5 rounded-xl text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/50 transition-colors">
-            <i data-lucide="corner-down-left" class="w-4 h-4"></i>
+          <button id="quick-task-submit" class="p-1.5 rounded-xl text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/50 transition-colors cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
           </button>
         </div>
 
         <!-- Task List -->
         <div class="flex-1">
           <div id="empty-state" class="hidden py-16 flex flex-col items-center justify-center text-center">
-            <div class="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-3">
-              <i data-lucide="check-check" class="w-7 h-7"></i>
+            <div class="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-3 text-2xl">
+              ✓
             </div>
             <h3 class="text-base font-semibold text-slate-800 dark:text-slate-200">No open tasks found</h3>
             <p class="text-xs text-slate-500 dark:text-slate-400 max-w-xs mt-1">You're all caught up! Create a new task or switch to another view or list.</p>
@@ -212,9 +210,7 @@
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-xl relative">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
         <h3 id="modal-task-title" class="text-base font-bold text-slate-900 dark:text-white">Create Task</h3>
-        <button id="btn-close-modal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
+        <button id="btn-close-modal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg">✕</button>
       </div>
 
       <form id="task-form" class="mt-4 space-y-4">
@@ -242,12 +238,11 @@
 
         <div class="pt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800">
           <button type="button" id="btn-delete-task" class="hidden text-xs text-rose-600 hover:text-rose-700 dark:text-rose-400 font-semibold flex items-center space-x-1">
-            <i data-lucide="trash-2" class="w-4 h-4"></i>
-            <span>Delete</span>
+            <span>🗑️ Delete</span>
           </button>
           <div class="flex items-center space-x-2 ml-auto">
             <button type="button" id="btn-cancel-modal" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">Cancel</button>
-            <button type="submit" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition-all">Save Task</button>
+            <button type="submit" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition-all cursor-pointer">Save Task</button>
           </div>
         </div>
       </form>
@@ -305,7 +300,7 @@
     window.addEventListener('DOMContentLoaded', () => {
       initTheme();
       setupEventListeners();
-      
+
       if (accessToken) {
         verifyAndFetchData();
       } else {
@@ -313,10 +308,107 @@
       }
     });
 
-    // Callback when Google's Identity library loads
-    function onGsiLoaded() {
+    function initTheme() {
+      if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      if (document.documentElement.classList.contains('dark')) {
+        document.documentElement.classList.remove('dark');
+        localStorage.theme = 'light';
+      } else {
+        document.documentElement.classList.add('dark');
+        localStorage.theme = 'dark';
+      }
+    });
+
+    // Directly called by button click:
+    function startGoogleAuth() {
+      if (isLiveAccount) {
+        if (confirm('Disconnect Google account and switch to demo mode?')) {
+          accessToken = null;
+          localStorage.removeItem('gtasks_access_token');
+          isLiveAccount = false;
+          updateAuthStatusUI(false);
+          loadDemoData();
+        }
+        return;
+      }
+
+      // Check if Google GIS library loaded
+      if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
+        alert('The Google Identity library has not finished loading or was blocked by an adblocker/shield. Please disable adblockers for this page and refresh.');
+        return;
+      }
+
       try {
-        tokenClient = google.accounts.oauth2.initTokenClient({
-          client_id: GOOGLE_CLIENT_ID,
-          scope: SCOPES,
-          callback: async (tokenResponse)
+        if (!tokenClient) {
+          tokenClient = google.accounts.oauth2.initTokenClient({
+            client_id: GOOGLE_CLIENT_ID,
+            scope: SCOPES,
+            callback: async (tokenResponse) => {
+              if (tokenResponse && tokenResponse.access_token) {
+                accessToken = tokenResponse.access_token;
+                localStorage.setItem('gtasks_access_token', accessToken);
+                isLiveAccount = true;
+                updateAuthStatusUI(true);
+                await fetchAllGoogleData();
+              } else if (tokenResponse.error) {
+                alert('Sign in failed: ' + (tokenResponse.error_description || tokenResponse.error));
+              }
+            },
+            error_callback: (err) => {
+              alert('OAuth Error: ' + (err.message || 'Check console or origin permissions'));
+            }
+          });
+        }
+
+        tokenClient.requestAccessToken({ prompt: 'consent' });
+      } catch (err) {
+        console.error(err);
+        alert('Error starting sign-in: ' + err.message);
+      }
+    }
+
+    function updateAuthStatusUI(connected) {
+      const authBtn = document.getElementById('auth-btn');
+      const authLabel = document.getElementById('auth-btn-label');
+      const banner = document.getElementById('status-banner');
+      const bannerText = document.getElementById('banner-text');
+      const bannerAction = document.getElementById('banner-action-btn');
+
+      if (connected) {
+        authBtn.className = "flex items-center space-x-2 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-sm transition-all cursor-pointer";
+        authLabel.textContent = "Google Connected (Click to Disconnect)";
+        banner.className = "shrink-0 bg-emerald-50 dark:bg-emerald-950/40 border-b border-emerald-200 dark:border-emerald-900/50 px-4 py-2 text-xs text-emerald-800 dark:text-emerald-300 flex items-center justify-between z-10";
+        bannerText.textContent = "Live mode: Connected directly to your Google Tasks account.";
+        bannerAction.textContent = "Disconnect";
+      } else {
+        authBtn.className = "flex items-center space-x-2 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition-all cursor-pointer";
+        authLabel.textContent = "Connect Google";
+        banner.className = "shrink-0 bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-900/50 px-4 py-2 text-xs text-amber-800 dark:text-amber-300 flex items-center justify-between z-10";
+        bannerText.textContent = "Viewing offline sample tasks. Connect your Google account to manage your live tasks.";
+        bannerAction.textContent = "Sign In";
+      }
+    }
+
+    async function apiRequest(endpoint, options = {}) {
+      if (!accessToken) throw new Error('No access token available');
+      const res = await fetch(`https://tasks.googleapis.com/tasks/v1${endpoint}`, {
+        ...options,
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          ...(options.headers || {})
+        }
+      });
+      if (res.status === 401) throw new Error('Unauthorized');
+      if (res.status === 204) return null;
+      return await res.json();
+    }
+
+    async function fetchAllGoogle
