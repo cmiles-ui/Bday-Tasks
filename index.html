@@ -4,9 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Google Tasks Dashboard</title>
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Google Identity Services -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
     tailwind.config = {
@@ -14,13 +12,7 @@
       theme: {
         extend: {
           colors: {
-            brand: {
-              50: '#f0f7ff',
-              100: '#e0effe',
-              500: '#2563eb',
-              600: '#1d4ed8',
-              700: '#1e40af'
-            }
+            brand: { 50: '#f0f7ff', 500: '#2563eb', 600: '#1d4ed8', 700: '#1e40af' }
           }
         }
       }
@@ -28,129 +20,97 @@
   </script>
   <style>
     ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
     .dark ::-webkit-scrollbar-thumb { background: #475569; }
     .note-content a { color: #2563eb; text-decoration: underline; word-break: break-all; }
     .dark .note-content a { color: #60a5fa; }
   </style>
 </head>
-<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 h-screen flex flex-col font-sans antialiased transition-colors duration-200 overflow-hidden">
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 h-screen flex flex-col font-sans antialiased overflow-hidden">
 
   <!-- TOP HEADER -->
-  <header class="shrink-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 lg:px-6 py-3 flex items-center justify-between z-30">
+  <header class="shrink-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 lg:px-6 py-3 flex items-center justify-between z-20">
     <div class="flex items-center space-x-3">
-      <button id="mobile-menu-btn" onclick="toggleSidebar()" class="lg:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-      </button>
-      <div class="flex items-center space-x-2.5">
-        <div class="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm shadow-blue-500/30">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-        </div>
-        <div>
-          <h1 class="text-base font-bold tracking-tight leading-none text-slate-900 dark:text-white">Tasks Studio</h1>
-          <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Google Tasks Workspace</span>
-        </div>
+      <div class="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold shadow-sm">
+        ✓
+      </div>
+      <div>
+        <h1 class="text-base font-bold tracking-tight leading-none text-slate-900 dark:text-white">Tasks Studio</h1>
+        <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Google Tasks Workspace</span>
       </div>
     </div>
 
-    <!-- Center Search Bar -->
+    <!-- Search Bar -->
     <div class="hidden md:flex items-center flex-1 max-w-md mx-6">
-      <div class="relative w-full">
-        <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-        <input 
-          type="text" 
-          id="search-input" 
-          placeholder="Search open tasks, notes, or tags..." 
-          class="w-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 pl-9 pr-8 py-1.5 rounded-xl text-sm border-0 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-        />
-        <button id="clear-search" onclick="clearSearch()" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">✕</button>
-      </div>
+      <input 
+        type="text" 
+        id="search-input" 
+        placeholder="Search open tasks, notes, or tags..." 
+        class="w-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 px-4 py-1.5 rounded-xl text-sm border-0 focus:ring-2 focus:ring-blue-500 outline-none"
+      />
     </div>
 
     <!-- Right Controls -->
     <div class="flex items-center space-x-2">
-      <button id="theme-toggle" onclick="toggleTheme()" class="p-2 rounded-xl text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors" title="Toggle Theme">
+      <button onclick="toggleTheme()" class="p-2 rounded-xl text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 text-base" title="Toggle Theme">
         <span class="dark:hidden">🌙</span>
         <span class="hidden dark:inline">☀️</span>
       </button>
       
-      <div id="auth-container">
-        <button id="auth-btn" onclick="startGoogleAuth()" class="flex items-center space-x-2 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-semibold shadow-sm transition-all cursor-pointer">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
-          <span id="auth-btn-label">Connect Google</span>
-        </button>
-      </div>
+      <button id="auth-btn" onclick="startGoogleAuth()" class="flex items-center space-x-2 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition-all cursor-pointer">
+        <span id="auth-btn-label">Connect Google</span>
+      </button>
     </div>
   </header>
 
   <!-- BANNER -->
-  <div id="status-banner" class="shrink-0 bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-900/50 px-4 py-2 text-xs text-amber-800 dark:text-amber-300 flex items-center justify-between z-20">
+  <div id="status-banner" class="shrink-0 bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-900/50 px-4 py-2 text-xs text-amber-800 dark:text-amber-300 flex items-center justify-between z-10">
     <div class="flex items-center space-x-2 truncate">
-      <span class="font-bold">ℹ️</span>
       <span id="banner-text">Viewing offline sample tasks. Connect your Google account to manage your live tasks.</span>
     </div>
-    <button id="banner-action-btn" onclick="startGoogleAuth()" class="font-semibold underline ml-3 shrink-0 hover:text-amber-900 dark:hover:text-amber-100 cursor-pointer">
+    <button onclick="startGoogleAuth()" class="font-semibold underline ml-3 shrink-0 hover:text-amber-900 dark:hover:text-amber-100 cursor-pointer">
       Sign In
     </button>
   </div>
 
   <!-- MAIN BODY -->
-  <div class="flex-1 flex overflow-hidden relative">
-    
+  <div class="flex-1 flex overflow-hidden">
     <!-- SIDEBAR -->
-    <aside id="sidebar" class="w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col shrink-0 lg:static fixed inset-y-0 left-0 z-40 transform -translate-x-full lg:translate-x-0 transition-transform duration-200">
-      <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+    <aside class="w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col shrink-0">
+      <div class="p-4 border-b border-slate-100 dark:border-slate-800">
         <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Quick Views</h2>
-        <button onclick="toggleSidebar()" class="lg:hidden p-1 text-slate-400 hover:text-slate-600">✕</button>
       </div>
 
-      <div class="px-2 py-3 space-y-0.5">
+      <div class="px-2 py-3 space-y-1">
         <button onclick="setFilter('all-open')" data-filter="all-open" class="filter-btn active w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-colors bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
-          <div class="flex items-center space-x-2.5">
-            <span>📥</span>
-            <span>All Open Tasks</span>
-          </div>
+          <span>📥 All Open Tasks</span>
           <span id="count-all-open" class="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-800/50 font-semibold">0</span>
         </button>
         <button onclick="setFilter('today')" data-filter="today" class="filter-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-colors text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60">
-          <div class="flex items-center space-x-2.5">
-            <span>📅</span>
-            <span>Due Today</span>
-          </div>
+          <span>📅 Due Today</span>
           <span id="count-today" class="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 font-semibold">0</span>
         </button>
         <button onclick="setFilter('overdue')" data-filter="overdue" class="filter-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-colors text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60">
-          <div class="flex items-center space-x-2.5">
-            <span>⚠️</span>
-            <span>Overdue</span>
-          </div>
+          <span>⚠️ Overdue</span>
           <span id="count-overdue" class="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 font-semibold">0</span>
         </button>
       </div>
 
       <div class="mt-4 px-4 flex items-center justify-between">
         <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Lists</h2>
-        <button onclick="promptNewList()" class="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800" title="New List">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-        </button>
+        <button onclick="promptNewList()" class="p-1 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" title="New List">+</button>
       </div>
 
-      <div id="lists-container" class="flex-1 overflow-y-auto px-2 py-2 space-y-0.5"></div>
+      <div id="lists-container" class="flex-1 overflow-y-auto px-2 py-2 space-y-1"></div>
 
       <div class="p-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-400">
         <span id="sync-status">Ready</span>
-        <button onclick="refreshData()" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300" title="Refresh Tasks">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-        </button>
+        <button onclick="refreshData()" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300" title="Refresh">🔄</button>
       </div>
     </aside>
 
-    <!-- BACKDROP (strictly hidden when sidebar is closed) -->
-    <div id="sidebar-backdrop" onclick="toggleSidebar(false)" class="fixed inset-0 bg-slate-900/40 z-30 hidden pointer-events-none transition-opacity"></div>
-
     <!-- MAIN TASK CONTENT -->
-    <main class="flex-1 flex flex-col min-w-0 bg-slate-50 dark:bg-slate-950 overflow-y-auto z-10">
+    <main class="flex-1 flex flex-col min-w-0 bg-slate-50 dark:bg-slate-950 overflow-y-auto">
       <div class="max-w-4xl w-full mx-auto p-4 md:p-6 lg:p-8 flex-1 flex flex-col space-y-6">
         
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -160,44 +120,39 @@
           </div>
           
           <div class="flex items-center space-x-2">
-            <select id="sort-select" onchange="changeSort(this.value)" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+            <select id="sort-select" onchange="changeSort(this.value)" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 shadow-sm outline-none">
               <option value="due-asc">Sort: Due Date (Earliest)</option>
               <option value="due-desc">Sort: Due Date (Latest)</option>
               <option value="title">Sort: Alphabetical</option>
               <option value="list">Sort: By List</option>
             </select>
 
-            <button onclick="openTaskModal()" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition-all cursor-pointer">
-              <span>+ New Task</span>
+            <button onclick="openTaskModal()" class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition-all cursor-pointer">
+              + New Task
             </button>
           </div>
         </div>
 
         <!-- Quick Add Bar -->
-        <div class="relative bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-2 flex items-center transition-all focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500">
-          <div class="pl-2 pr-1 text-slate-400">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3-3H9m12 3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-          </div>
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-2 flex items-center">
           <input 
             type="text" 
             id="quick-task-title" 
             placeholder="Add an open task quickly... (Press Enter)" 
             onkeypress="if(event.key==='Enter') quickAddTask()"
-            class="flex-1 bg-transparent px-2 py-1.5 text-sm outline-none text-slate-800 dark:text-slate-100 placeholder-slate-400"
+            class="flex-1 bg-transparent px-3 py-1.5 text-sm outline-none text-slate-800 dark:text-slate-100 placeholder-slate-400"
           />
-          <button onclick="quickAddTask()" class="p-1.5 rounded-xl text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/50 transition-colors cursor-pointer">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+          <button onclick="quickAddTask()" class="px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 text-xs font-semibold hover:bg-blue-100 transition-colors cursor-pointer">
+            Add
           </button>
         </div>
 
-        <!-- Task List -->
+        <!-- Task List Area -->
         <div class="flex-1">
           <div id="empty-state" class="hidden py-16 flex flex-col items-center justify-center text-center">
-            <div class="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-3 text-2xl">
-              ✓
-            </div>
+            <div class="text-3xl mb-2">🎉</div>
             <h3 class="text-base font-semibold text-slate-800 dark:text-slate-200">No open tasks found</h3>
-            <p class="text-xs text-slate-500 dark:text-slate-400 max-w-xs mt-1">You're all caught up! Create a new task or switch to another view or list.</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 max-w-xs mt-1">You're all caught up! Create a new task or switch to another view.</p>
           </div>
 
           <div id="tasks-container" class="space-y-3 pb-12"></div>
@@ -207,40 +162,40 @@
     </main>
   </div>
 
-  <!-- MODAL -->
+  <!-- TASK MODAL (Create / Edit) -->
   <div id="task-modal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-xl relative">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
         <h3 id="modal-task-title" class="text-base font-bold text-slate-900 dark:text-white">Create Task</h3>
-        <button onclick="closeTaskModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg">✕</button>
+        <button onclick="closeTaskModal()" class="text-slate-400 hover:text-slate-600 text-lg">✕</button>
       </div>
 
       <form id="task-form" onsubmit="handleTaskFormSubmit(event)" class="mt-4 space-y-4">
         <input type="hidden" id="form-task-id" />
         <div>
           <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Title *</label>
-          <input type="text" id="form-title" required placeholder="e.g., Review project design specs" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <input type="text" id="form-title" required placeholder="e.g., Review project design specs" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Target List</label>
-            <select id="form-list-id" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
+            <select id="form-list-id" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"></select>
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Due Date</label>
-            <input type="date" id="form-due-date" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <input type="date" id="form-due-date" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Notes / Details</label>
-          <textarea id="form-notes" rows="5" placeholder="Add full notes, descriptions, links, or bullet points here..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans"></textarea>
+          <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Notes / Details (Full Multi-Line View)</label>
+          <textarea id="form-notes" rows="6" placeholder="Add full notes, descriptions, links, or bullet points here..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 font-sans"></textarea>
         </div>
 
         <div class="pt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800">
-          <button type="button" id="btn-delete-task" class="hidden text-xs text-rose-600 hover:text-rose-700 dark:text-rose-400 font-semibold flex items-center space-x-1">
-            <span>🗑️ Delete</span>
+          <button type="button" id="btn-delete-task" class="hidden text-xs text-rose-600 hover:text-rose-700 font-semibold">
+            Delete Task
           </button>
           <div class="flex items-center space-x-2 ml-auto">
             <button type="button" onclick="closeTaskModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">Cancel</button>
@@ -251,12 +206,11 @@
     </div>
   </div>
 
-  <!-- SCRIPT -->
+  <!-- JAVASCRIPT LOGIC -->
   <script>
     const GOOGLE_CLIENT_ID = '948841075409-efkhae14gj3g5bf0pmld92329t3i9k6o.apps.googleusercontent.com';
     const SCOPES = 'https://www.googleapis.com/auth/tasks';
 
-    let tokenClient = null;
     let accessToken = localStorage.getItem('gtasks_access_token') || null;
     let isLiveAccount = false;
     let currentFilter = 'all-open';
@@ -300,3 +254,623 @@
     ];
 
     window.addEventListener('DOMContentLoaded', () => {
+      initTheme();
+      setupSearchListener();
+
+      if (accessToken) {
+        verifyAndFetchData();
+      } else {
+        loadDemoData();
+      }
+    });
+
+    function initTheme() {
+      if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+
+    function toggleTheme() {
+      if (document.documentElement.classList.contains('dark')) {
+        document.documentElement.classList.remove('dark');
+        localStorage.theme = 'light';
+      } else {
+        document.documentElement.classList.add('dark');
+        localStorage.theme = 'dark';
+      }
+    }
+
+    function startGoogleAuth() {
+      if (isLiveAccount) {
+        if (confirm('Disconnect Google account and switch to demo mode?')) {
+          localStorage.removeItem('gtasks_access_token');
+          accessToken = null;
+          isLiveAccount = false;
+          updateAuthStatusUI(false);
+          loadDemoData();
+        }
+        return;
+      }
+
+      if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
+        alert('Google Sign-in service is still loading. Please check your internet or disable ad-blockers and try again.');
+        return;
+      }
+
+      document.getElementById('auth-btn-label').textContent = 'Opening Login...';
+
+      const client = google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: SCOPES,
+        callback: async (tokenResponse) => {
+          if (tokenResponse && tokenResponse.access_token) {
+            accessToken = tokenResponse.access_token;
+            localStorage.setItem('gtasks_access_token', accessToken);
+            isLiveAccount = true;
+            updateAuthStatusUI(true);
+            await fetchAllGoogleData();
+          } else {
+            document.getElementById('auth-btn-label').textContent = 'Connect Google';
+            alert('Sign in was canceled or failed.');
+          }
+        },
+        error_callback: (err) => {
+          document.getElementById('auth-btn-label').textContent = 'Connect Google';
+          alert('OAuth Error: ' + (err.message || err.type || 'Permission denied'));
+        }
+      });
+
+      client.requestAccessToken({ prompt: 'consent' });
+    }
+
+    function updateAuthStatusUI(connected) {
+      const authBtn = document.getElementById('auth-btn');
+      const authLabel = document.getElementById('auth-btn-label');
+      const banner = document.getElementById('status-banner');
+      const bannerText = document.getElementById('banner-text');
+
+      if (connected) {
+        authBtn.className = "flex items-center space-x-2 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-sm transition-all cursor-pointer";
+        authLabel.textContent = "Google Connected";
+        banner.className = "shrink-0 bg-emerald-50 dark:bg-emerald-950/40 border-b border-emerald-200 dark:border-emerald-900/50 px-4 py-2 text-xs text-emerald-800 dark:text-emerald-300 flex items-center justify-between z-10";
+        bannerText.textContent = "Live mode: Connected directly to your Google Tasks account.";
+      } else {
+        authBtn.className = "flex items-center space-x-2 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition-all cursor-pointer";
+        authLabel.textContent = "Connect Google";
+        banner.className = "shrink-0 bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-900/50 px-4 py-2 text-xs text-amber-800 dark:text-amber-300 flex items-center justify-between z-10";
+        bannerText.textContent = "Viewing offline sample tasks. Connect your Google account to manage your live tasks.";
+      }
+    }
+
+    async function apiRequest(endpoint, options = {}) {
+      if (!accessToken) throw new Error('No token');
+      const res = await fetch(`https://tasks.googleapis.com/tasks/v1${endpoint}`, {
+        ...options,
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          ...(options.headers || {})
+        }
+      });
+      if (res.status === 401) throw new Error('Unauthorized');
+      if (res.status === 204) return null;
+      return await res.json();
+    }
+
+    async function fetchAllGoogleData() {
+      setSyncStatus('Fetching...');
+      try {
+        const listsData = await apiRequest('/users/@me/lists');
+        taskLists = listsData.items || [];
+
+        let fetchedTasks = [];
+        for (const list of taskLists) {
+          const tasksData = await apiRequest(`/lists/${list.id}/tasks?showCompleted=false&showHidden=false`);
+          if (tasksData.items) {
+            const listTasks = tasksData.items.map(t => ({
+              id: t.id,
+              listId: list.id,
+              title: t.title || '(Untitled Task)',
+              notes: t.notes || '',
+              due: t.due || null,
+              status: t.status
+            }));
+            fetchedTasks = fetchedTasks.concat(listTasks);
+          }
+        }
+
+        allTasks = fetchedTasks;
+        setSyncStatus('Synced');
+        renderLists();
+        renderTasks();
+      } catch (err) {
+        console.error(err);
+        setSyncStatus('Sync Failed');
+        throw err;
+      }
+    }
+
+    async function verifyAndFetchData() {
+      setSyncStatus('Connecting...');
+      try {
+        await fetchAllGoogleData();
+        isLiveAccount = true;
+        updateAuthStatusUI(true);
+      } catch (err) {
+        localStorage.removeItem('gtasks_access_token');
+        accessToken = null;
+        isLiveAccount = false;
+        updateAuthStatusUI(false);
+        loadDemoData();
+      }
+    }
+
+    function loadDemoData() {
+      taskLists = [...DEMO_LISTS];
+      allTasks = [...DEMO_TASKS];
+      setSyncStatus('Demo Mode');
+      renderLists();
+      renderTasks();
+    }
+
+    function renderLists() {
+      const container = document.getElementById('lists-container');
+      const formListSelect = document.getElementById('form-list-id');
+      container.innerHTML = '';
+      formListSelect.innerHTML = '';
+
+      taskLists.forEach(list => {
+        const count = allTasks.filter(t => t.listId === list.id && t.status !== 'completed').length;
+        const btn = document.createElement('button');
+        btn.className = `filter-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+          currentFilter === list.id 
+            ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' 
+            : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60'
+        }`;
+        btn.dataset.filter = list.id;
+        btn.innerHTML = `
+          <span class="truncate">📋 ${escapeHtml(list.title)}</span>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 font-semibold">${count}</span>
+        `;
+        btn.onclick = () => setFilter(list.id);
+        container.appendChild(btn);
+
+        const opt = document.createElement('option');
+        opt.value = list.id;
+        opt.textContent = list.title;
+        formListSelect.appendChild(opt);
+      });
+
+      updateCounts();
+    }
+
+    function updateCounts() {
+      const openTasks = allTasks.filter(t => t.status !== 'completed');
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      document.getElementById('count-all-open').textContent = openTasks.length;
+      document.getElementById('count-today').textContent = openTasks.filter(t => t.due && t.due.split('T')[0] === todayStr).length;
+      document.getElementById('count-overdue').textContent = openTasks.filter(t => t.due && t.due.split('T')[0] < todayStr).length;
+    }
+
+    function formatNotesWithLinks(text) {
+      if (!text) return '';
+      const escaped = text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+      
+      const urlRegex = /(https?:\/\/[^\s<]+)/g;
+      return escaped.replace(urlRegex, (url) => {
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="hover:underline font-medium">${url}</a>`;
+      });
+    }
+
+    function renderTasks() {
+      const container = document.getElementById('tasks-container');
+      const emptyState = document.getElementById('empty-state');
+      container.innerHTML = '';
+
+      const todayStr = new Date().toISOString().split('T')[0];
+      let filtered = allTasks.filter(t => t.status !== 'completed');
+
+      if (currentFilter === 'today') {
+        filtered = filtered.filter(t => t.due && t.due.split('T')[0] === todayStr);
+      } else if (currentFilter === 'overdue') {
+        filtered = filtered.filter(t => t.due && t.due.split('T')[0] < todayStr);
+      } else if (currentFilter !== 'all-open') {
+        filtered = filtered.filter(t => t.listId === currentFilter);
+      }
+
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        filtered = filtered.filter(t => 
+          t.title.toLowerCase().includes(q) || (t.notes && t.notes.toLowerCase().includes(q))
+        );
+      }
+
+      filtered.sort((a, b) => {
+        if (sortOption === 'due-asc') {
+          if (!a.due) return 1; if (!b.due) return -1;
+          return new Date(a.due) - new Date(b.due);
+        } else if (sortOption === 'due-desc') {
+          if (!a.due) return 1; if (!b.due) return -1;
+          return new Date(b.due) - new Date(a.due);
+        } else if (sortOption === 'title') {
+          return a.title.localeCompare(b.title);
+        } else if (sortOption === 'list') {
+          return (a.listId || '').localeCompare(b.listId || '');
+        }
+        return 0;
+      });
+
+      if (filtered.length === 0) {
+        emptyState.classList.remove('hidden');
+      } else {
+        emptyState.classList.add('hidden');
+      }
+
+      filtered.forEach(task => {
+        const list = taskLists.find(l => l.id === task.listId);
+        const listName = list ? list.title : 'Tasks';
+
+        let dueBadge = '';
+        if (task.due) {
+          const taskDueDate = task.due.split('T')[0];
+          const dateFormatted = new Date(task.due).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+
+          if (taskDueDate < todayStr) {
+            dueBadge = `<span class="inline-flex items-center text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50 px-2 py-0.5 rounded-md">⚠️ Overdue: ${dateFormatted}</span>`;
+          } else if (taskDueDate === todayStr) {
+            dueBadge = `<span class="inline-flex items-center text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-md">⏱️ Today</span>`;
+          } else {
+            dueBadge = `<span class="inline-flex items-center text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">📅 ${dateFormatted}</span>`;
+          }
+        }
+
+        const taskCard = document.createElement('div');
+        taskCard.id = `task-card-${task.id}`;
+        taskCard.className = 'group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all flex items-start space-x-3.5';
+
+        const formattedNotes = formatNotesWithLinks(task.notes);
+        const notesSection = formattedNotes ? `
+          <div class="note-content mt-2 text-xs text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap font-sans bg-slate-50/70 dark:bg-slate-800/40 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800/80">
+            ${formattedNotes}
+          </div>
+        ` : '';
+
+        taskCard.innerHTML = `
+          <button class="btn-complete mt-0.5 w-5 h-5 rounded-lg border-2 border-slate-300 dark:border-slate-600 hover:border-blue-600 dark:hover:border-blue-500 flex items-center justify-center transition-colors shrink-0 cursor-pointer" title="Mark completed">
+            <span class="text-xs text-white opacity-0 check-mark">✓</span>
+          </button>
+          <div class="flex-1 min-w-0 cursor-pointer btn-open-edit">
+            <div class="flex items-start justify-between gap-2">
+              <h4 class="text-sm font-semibold text-slate-900 dark:text-slate-100 leading-snug break-words">
+                ${escapeHtml(task.title)}
+              </h4>
+              <button class="p-1 rounded-lg text-slate-400 hover:text-blue-600 text-xs" title="Edit task">✏️</button>
+            </div>
+            ${notesSection}
+            <div class="mt-2.5 flex flex-wrap items-center gap-2">
+              <span class="inline-flex items-center text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/80 px-2 py-0.5 rounded-md">
+                📁 ${escapeHtml(listName)}
+              </span>
+              ${dueBadge}
+            </div>
+          </div>
+        `;
+
+        taskCard.querySelector('.btn-complete').onclick = (e) => {
+          e.stopPropagation();
+          completeTask(task.id, taskCard);
+        };
+
+        taskCard.querySelector('.btn-open-edit').onclick = (e) => {
+          if (e.target.tagName.toLowerCase() === 'a') return;
+          openTaskModal(task.id);
+        };
+
+        container.appendChild(taskCard);
+      });
+
+      updateCounts();
+    }
+
+    async function completeTask(taskId, cardElement) {
+      const task = allTasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      const checkbox = cardElement.querySelector('.btn-complete');
+      checkbox.classList.add('bg-blue-600', 'border-blue-600');
+      const checkMark = checkbox.querySelector('.check-mark');
+      if (checkMark) checkMark.classList.remove('opacity-0');
+      cardElement.style.opacity = '0.4';
+      cardElement.style.transform = 'scale(0.98)';
+      cardElement.style.transition = 'all 0.25s ease';
+
+      task.status = 'completed';
+
+      setTimeout(async () => {
+        if (isLiveAccount) {
+          try {
+            await apiRequest(`/lists/${task.listId}/tasks/${task.id}`, {
+              method: 'PATCH',
+              body: JSON.stringify({ status: 'completed' })
+            });
+          } catch (err) {
+            console.error(err);
+            task.status = 'needsAction';
+          }
+        }
+        renderTasks();
+        renderLists();
+      }, 300);
+    }
+
+    async function quickAddTask() {
+      const input = document.getElementById('quick-task-title');
+      const title = input.value.trim();
+      if (!title) return;
+
+      let targetListId = taskLists[0]?.id;
+      if (currentFilter !== 'all-open' && currentFilter !== 'today' && currentFilter !== 'overdue') {
+        targetListId = currentFilter;
+      }
+
+      const newTaskData = {
+        title: title,
+        notes: '',
+        status: 'needsAction',
+        due: currentFilter === 'today' ? new Date().toISOString() : null
+      };
+
+      input.value = '';
+      setSyncStatus('Adding...');
+
+      if (isLiveAccount) {
+        try {
+          const res = await apiRequest(`/lists/${targetListId}/tasks`, {
+            method: 'POST',
+            body: JSON.stringify(newTaskData)
+          });
+          allTasks.unshift({
+            id: res.id,
+            listId: targetListId,
+            title: res.title,
+            notes: res.notes || '',
+            due: res.due || null,
+            status: res.status
+          });
+          setSyncStatus('Synced');
+        } catch (err) {
+          alert('Could not add task to Google Tasks.');
+        }
+      } else {
+        allTasks.unshift({
+          id: 'demo-' + Date.now(),
+          listId: targetListId,
+          ...newTaskData
+        });
+        setSyncStatus('Demo Mode');
+      }
+
+      renderTasks();
+      renderLists();
+    }
+
+    function openTaskModal(taskId = null) {
+      const modal = document.getElementById('task-modal');
+      const modalTitle = document.getElementById('modal-task-title');
+      const deleteBtn = document.getElementById('btn-delete-task');
+      const form = document.getElementById('task-form');
+
+      form.reset();
+
+      if (taskId) {
+        const task = allTasks.find(t => t.id === taskId);
+        if (!task) return;
+
+        modalTitle.textContent = 'Edit Task Details';
+        document.getElementById('form-task-id').value = task.id;
+        document.getElementById('form-title').value = task.title;
+        document.getElementById('form-notes').value = task.notes || '';
+        document.getElementById('form-list-id').value = task.listId;
+        document.getElementById('form-due-date').value = task.due ? task.due.split('T')[0] : '';
+
+        deleteBtn.classList.remove('hidden');
+        deleteBtn.onclick = () => deleteTask(task.id);
+      } else {
+        modalTitle.textContent = 'Create New Task';
+        document.getElementById('form-task-id').value = '';
+        document.getElementById('form-due-date').value = '';
+        
+        if (currentFilter !== 'all-open' && currentFilter !== 'today' && currentFilter !== 'overdue') {
+          document.getElementById('form-list-id').value = currentFilter;
+        }
+
+        deleteBtn.classList.add('hidden');
+      }
+
+      modal.classList.remove('hidden');
+    }
+
+    function closeTaskModal() {
+      document.getElementById('task-modal').classList.add('hidden');
+    }
+
+    async function handleTaskFormSubmit(e) {
+      e.preventDefault();
+      const taskId = document.getElementById('form-task-id').value;
+      const title = document.getElementById('form-title').value.trim();
+      const notes = document.getElementById('form-notes').value.trim();
+      const listId = document.getElementById('form-list-id').value;
+      const dueDateVal = document.getElementById('form-due-date').value;
+      const due = dueDateVal ? new Date(dueDateVal + 'T00:00:00Z').toISOString() : null;
+
+      if (!title) return;
+      closeTaskModal();
+      setSyncStatus('Saving...');
+
+      if (taskId) {
+        const task = allTasks.find(t => t.id === taskId);
+        if (!task) return;
+
+        task.title = title;
+        task.notes = notes;
+        task.due = due;
+        task.listId = listId;
+
+        if (isLiveAccount) {
+          try {
+            await apiRequest(`/lists/${listId}/tasks/${taskId}`, {
+              method: 'PATCH',
+              body: JSON.stringify({ title, notes, due })
+            });
+            setSyncStatus('Synced');
+          } catch (err) {
+            alert('Could not update task on Google Tasks.');
+          }
+        }
+      } else {
+        const newTaskPayload = { title, notes, due, status: 'needsAction' };
+        if (isLiveAccount) {
+          try {
+            const res = await apiRequest(`/lists/${listId}/tasks`, {
+              method: 'POST',
+              body: JSON.stringify(newTaskPayload)
+            });
+            allTasks.unshift({
+              id: res.id,
+              listId: listId,
+              title: res.title,
+              notes: res.notes || '',
+              due: res.due || null,
+              status: res.status
+            });
+            setSyncStatus('Synced');
+          } catch (err) {
+            alert('Failed to create task.');
+          }
+        } else {
+          allTasks.unshift({
+            id: 'demo-' + Date.now(),
+            listId: listId,
+            ...newTaskPayload
+          });
+          setSyncStatus('Demo Mode');
+        }
+      }
+
+      renderTasks();
+      renderLists();
+    }
+
+    async function deleteTask(taskId) {
+      if (!confirm('Are you sure you want to delete this task?')) return;
+      const task = allTasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      closeTaskModal();
+      allTasks = allTasks.filter(t => t.id !== taskId);
+
+      if (isLiveAccount) {
+        try {
+          await apiRequest(`/lists/${task.listId}/tasks/${taskId}`, { method: 'DELETE' });
+          setSyncStatus('Synced');
+        } catch (err) {
+          alert('Could not delete from Google Tasks.');
+        }
+      }
+
+      renderTasks();
+      renderLists();
+    }
+
+    function setFilter(filterType) {
+      currentFilter = filterType;
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        if (btn.dataset.filter === filterType) {
+          btn.className = 'filter-btn active w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-colors bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300';
+        } else {
+          btn.className = 'filter-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-colors text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60';
+        }
+      });
+
+      const titleEl = document.getElementById('current-view-title');
+      const descEl = document.getElementById('current-view-desc');
+      if (filterType === 'all-open') {
+        titleEl.textContent = 'All Open Tasks';
+        descEl.textContent = 'Viewing all active, uncompleted tasks across lists';
+      } else if (filterType === 'today') {
+        titleEl.textContent = 'Due Today';
+        descEl.textContent = 'Tasks scheduled for completion today';
+      } else if (filterType === 'overdue') {
+        titleEl.textContent = 'Overdue Tasks';
+        descEl.textContent = 'Open tasks that missed their scheduled due date';
+      } else {
+        const list = taskLists.find(l => l.id === filterType);
+        titleEl.textContent = list ? list.title : 'Task List';
+        descEl.textContent = 'Viewing open tasks from this specific list';
+      }
+
+      renderTasks();
+    }
+
+    function setSyncStatus(msg) {
+      document.getElementById('sync-status').textContent = msg;
+    }
+
+    function changeSort(val) {
+      sortOption = val;
+      renderTasks();
+    }
+
+    function setupSearchListener() {
+      const searchInput = document.getElementById('search-input');
+      searchInput.addEventListener('input', (e) => {
+        searchQuery = e.target.value;
+        renderTasks();
+      });
+    }
+
+    function promptNewList() {
+      const title = prompt('Enter new task list title:');
+      if (!title || !title.trim()) return;
+
+      if (isLiveAccount) {
+        setSyncStatus('Creating...');
+        apiRequest('/users/@me/lists', {
+          method: 'POST',
+          body: JSON.stringify({ title: title.trim() })
+        }).then(res => {
+          taskLists.push(res);
+          setSyncStatus('Synced');
+          renderLists();
+        }).catch(() => alert('Failed to create list on Google Tasks.'));
+      } else {
+        taskLists.push({ id: 'list-' + Date.now(), title: title.trim() });
+        renderLists();
+      }
+    }
+
+    function refreshData() {
+      if (isLiveAccount) fetchAllGoogleData();
+      else loadDemoData();
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+  </script>
+</body>
+</html>
