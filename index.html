@@ -12,7 +12,13 @@
       theme: {
         extend: {
           colors: {
-            brand: { 50: '#f0f7ff', 500: '#2563eb', 600: '#1d4ed8', 700: '#1e40af' }
+            brand: {
+              50: '#f0f7ff',
+              100: '#e0effe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8'
+            }
           }
         }
       }
@@ -21,108 +27,132 @@
   <style>
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
-    .dark ::-webkit-scrollbar-thumb { background: #475569; }
+    .dark ::-webkit-scrollbar-thumb { background: #334155; }
   </style>
 </head>
-<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 h-screen flex flex-col font-sans antialiased overflow-hidden">
+<body class="bg-slate-50/60 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen flex flex-col font-sans antialiased">
 
-  <!-- MAIN WORKSPACE -->
-  <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
-    <div class="max-w-4xl w-full mx-auto p-4 md:p-6 lg:p-8 flex-1 flex flex-col space-y-4">
+  <!-- TOP HEADER & CONTROLS -->
+  <header class="sticky top-0 z-30 bg-white/85 dark:bg-slate-900/85 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
       
-      <!-- INTEGRATED TOP CONTROLS -->
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
-        <div>
-          <div class="flex items-center space-x-2.5">
-            <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Bday Follow-Ups</h2>
-            <span id="connection-pill" class="inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900/40">
-              Demo Mode
-            </span>
+      <!-- Title & Live Stats -->
+      <div>
+        <div class="flex items-center space-x-2.5">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-sm shadow-blue-500/20">
+            🎂
           </div>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Select tasks to auto-DM via Chat and reschedule to the next business day</p>
+          <h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Bday Follow-Ups</h1>
+          <span id="connection-pill" class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900/40">
+            Demo Mode
+          </span>
         </div>
-        
-        <div class="flex items-center flex-wrap gap-2">
-          <!-- Refresh & Status -->
-          <button onclick="refreshData()" class="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-300 text-xs font-medium shadow-xs transition-colors cursor-pointer" title="Refresh Tasks">
-            <span>🔄</span>
-            <span id="sync-status">Ready</span>
-          </button>
-
-          <!-- Theme Toggle -->
-          <button onclick="toggleTheme()" class="p-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 text-xs shadow-xs transition-colors" title="Toggle Theme">
-            <span class="dark:hidden">🌙</span>
-            <span class="hidden dark:inline">☀️</span>
-          </button>
-
-          <!-- Google Auth / Connection Button -->
-          <button id="auth-btn" onclick="startGoogleAuth()" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-all cursor-pointer">
-            <span id="auth-btn-label">Connect Google</span>
-          </button>
-        </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Send personalized Google Chat outreach & roll tasks to the next business day</p>
       </div>
 
-      <!-- ACTION BUTTONS & SORT -->
-      <div class="flex items-center justify-between gap-2 pt-1">
-        <button onclick="toggleSelectAll()" id="btn-select-all" class="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold shadow-xs transition-all cursor-pointer">
+      <!-- Action & Auth Buttons -->
+      <div class="flex items-center space-x-2 self-start sm:self-center">
+        <!-- Quick Refresh -->
+        <button onclick="refreshData()" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-600 dark:text-slate-300 text-xs font-semibold shadow-xs transition-colors cursor-pointer" title="Refresh Tasks">
+          <span>🔄</span>
+          <span id="sync-status">Ready</span>
+        </button>
+
+        <!-- Theme Toggle -->
+        <button onclick="toggleTheme()" class="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 text-xs hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors shadow-xs" title="Toggle Dark/Light Mode">
+          <span class="dark:hidden">🌙</span>
+          <span class="hidden dark:inline">☀️</span>
+        </button>
+
+        <!-- Google Connect -->
+        <button id="auth-btn" onclick="startGoogleAuth()" class="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-semibold shadow-sm shadow-blue-500/20 transition-all cursor-pointer">
+          <span id="auth-btn-label">Connect Google</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN WORKSPACE -->
+  <main class="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-6 flex flex-col space-y-4">
+
+    <!-- STATS STRIP & TOOLBAR -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3 shadow-xs">
+      
+      <!-- Selection & Stat Badges -->
+      <div class="flex items-center space-x-2">
+        <button onclick="toggleSelectAll()" id="btn-select-all" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-all cursor-pointer">
           Select All
         </button>
 
-        <div class="flex items-center space-x-2">
-          <select id="sort-select" onchange="changeSort(this.value)" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 shadow-xs outline-none">
-            <option value="due-asc">Sort: Due Date (Earliest)</option>
-            <option value="due-desc">Sort: Due Date (Latest)</option>
-            <option value="title">Sort: Alphabetical</option>
-          </select>
+        <span class="text-xs text-slate-400 dark:text-slate-500">•</span>
 
-          <button onclick="openTaskModal()" class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-all cursor-pointer">
-            + New Task
-          </button>
+        <div class="flex items-center space-x-1.5 text-xs text-slate-600 dark:text-slate-400 font-medium">
+          <span>Total:</span>
+          <span id="stat-total" class="font-bold text-slate-900 dark:text-white">0</span>
+        </div>
+
+        <span class="text-xs text-slate-400 dark:text-slate-500">•</span>
+
+        <div class="flex items-center space-x-1.5 text-xs text-slate-600 dark:text-slate-400 font-medium">
+          <span>Due Today:</span>
+          <span id="stat-today" class="font-bold text-emerald-600 dark:text-emerald-400">0</span>
         </div>
       </div>
 
-      <!-- TASK LIST AREA -->
-      <div class="flex-1">
-        <div id="empty-state" class="hidden py-16 flex flex-col items-center justify-center text-center">
-          <div class="text-3xl mb-2">🎉</div>
-          <h3 class="text-base font-semibold text-slate-800 dark:text-slate-200">No open tasks found</h3>
-          <p class="text-xs text-slate-500 dark:text-slate-400 max-w-xs mt-1">You're all caught up! Create a new task or refresh.</p>
-        </div>
+      <!-- Sort & Manual Create -->
+      <div class="flex items-center space-x-2">
+        <select id="sort-select" onchange="changeSort(this.value)" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 outline-none cursor-pointer">
+          <option value="due-asc">Sort: Due Date (Earliest)</option>
+          <option value="due-desc">Sort: Due Date (Latest)</option>
+          <option value="name">Sort: Name (A-Z)</option>
+        </select>
 
-        <div id="tasks-container" class="space-y-3 pb-24"></div>
+        <button onclick="openTaskModal()" class="px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-600 dark:text-blue-400 text-xs font-bold transition-all cursor-pointer">
+          + New Task
+        </button>
+      </div>
+    </div>
+
+    <!-- TASK LIST CONTAINER -->
+    <div class="flex-1 pb-24">
+      <div id="empty-state" class="hidden py-16 flex flex-col items-center justify-center text-center">
+        <div class="text-4xl mb-3">🎉</div>
+        <h3 class="text-base font-bold text-slate-800 dark:text-slate-200">All caught up!</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 max-w-xs mt-1">There are no pending birthday follow-ups scheduled.</p>
       </div>
 
+      <div id="tasks-container" class="space-y-3"></div>
     </div>
   </main>
 
-  <!-- FLOATING ACTION BAR -->
-  <div id="chat-action-bar" class="fixed bottom-6 inset-x-0 mx-auto max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl p-4 flex items-center justify-between z-30 transform translate-y-32 transition-transform duration-300 ease-out">
+  <!-- FLOATING BATCH OUTREACH DOCK -->
+  <div id="chat-action-bar" class="fixed bottom-6 inset-x-0 mx-auto max-w-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border border-slate-200 dark:border-slate-700/80 rounded-2xl shadow-2xl shadow-blue-900/10 p-3.5 flex items-center justify-between z-40 transform translate-y-32 transition-transform duration-300 ease-out">
     <div class="flex items-center space-x-3">
-      <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-sm">
+      <div class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-base font-bold shadow-xs">
         💬
       </div>
       <div>
         <div class="text-sm font-bold text-slate-900 dark:text-white">
-          <span id="selected-count">0</span> Tasks Selected
+          <span id="selected-count">0</span> Employees Selected
         </div>
-        <p class="text-xs text-slate-500 dark:text-slate-400">Silent DM dispatch & automatic next-business-day rescheduling</p>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Dispatch 1:1 Google Chat DMs & roll tasks forward</p>
       </div>
     </div>
 
     <div class="flex items-center space-x-2">
-      <button onclick="clearSelection()" class="px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
+      <button onclick="clearSelection()" class="px-3 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer">
         Cancel
       </button>
-      <button id="btn-dispatch-dms" onclick="dispatchChatAndReschedule()" class="flex items-center space-x-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-semibold shadow-md transition-all cursor-pointer">
+      <button id="btn-dispatch-dms" onclick="dispatchChatAndReschedule()" class="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 active:scale-95 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-600/20 transition-all cursor-pointer">
         <span>Send DMs & Reschedule</span>
         <span>→</span>
       </button>
     </div>
   </div>
 
-  <!-- TASK MODAL -->
+  <!-- TASK MODAL (Create / Edit) -->
   <div id="task-modal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-xl relative">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
         <h3 id="modal-task-title" class="text-base font-bold text-slate-900 dark:text-white">Create Task</h3>
         <button onclick="closeTaskModal()" class="text-slate-400 hover:text-slate-600 text-lg">✕</button>
@@ -133,43 +163,41 @@
         <input type="hidden" id="form-list-id" />
         
         <div>
-          <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-            Task Name * <span class="text-blue-600 dark:text-blue-400 font-normal">(Format: FullName - BirthDate - PrimaryEmail)</span>
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">
+            Task Title * <span class="text-blue-600 dark:text-blue-400 font-normal">(FullName - BirthDate - PrimaryEmail)</span>
           </label>
           <input type="text" id="form-title" required placeholder="John Doe - 01/01/1970 - jdoe@domainname.com" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Due Date</label>
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Due Date</label>
           <input type="date" id="form-due-date" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">
             Notes <span class="text-blue-600 dark:text-blue-400 font-normal">(Line 1: Striven URL, Line 2: Calendar URL)</span>
           </label>
-          <textarea id="form-notes" rows="4" placeholder="https://striven.com/employee/12345&#10;https://calendar.google.com/calendar/u/0/r" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 font-sans"></textarea>
+          <textarea id="form-notes" rows="3" placeholder="https://striven.com/employee/12345&#10;https://calendar.google.com/calendar/u/0/r" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 font-sans"></textarea>
         </div>
 
         <div class="pt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800">
-          <button type="button" id="btn-delete-task" class="hidden text-xs text-rose-600 hover:text-rose-700 font-semibold">
+          <button type="button" id="btn-delete-task" class="hidden text-xs text-rose-600 hover:text-rose-700 font-bold">
             Delete Task
           </button>
           <div class="flex items-center space-x-2 ml-auto">
-            <button type="button" onclick="closeTaskModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">Cancel</button>
-            <button type="submit" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition-all cursor-pointer">Save Task</button>
+            <button type="button" onclick="closeTaskModal()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">Cancel</button>
+            <button type="submit" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-all cursor-pointer">Save Task</button>
           </div>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- JAVASCRIPT LOGIC -->
+  <!-- CORE LOGIC & PARSING -->
   <script>
     const GOOGLE_CLIENT_ID = '948841075409-efkhae14gj3g5bf0pmld92329t3i9k6o.apps.googleusercontent.com';
     const SCOPES = 'https://www.googleapis.com/auth/tasks';
-
-    // Integrated Google Apps Script Webhook URL
     const APPS_SCRIPT_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyAAWmJDaHMuian_enjc2CoGWqbTJTdocp_pSxoDxoT39FqZwZOysVZVjPuUnDajnfB_A/exec';
 
     let accessToken = localStorage.getItem('gtasks_access_token') || null;
@@ -180,15 +208,12 @@
     let allTasks = [];
     let selectedTaskIds = new Set();
 
-    const DEMO_LISTS = [
-      { id: 'list-default', title: 'Team Outreach' }
-    ];
-
+    const DEMO_LISTS = [{ id: 'list-default', title: 'Team Outreach' }];
     const DEMO_TASKS = [
       {
         id: 't-1',
         listId: 'list-default',
-        title: 'Sierra Miles - 05/14/1995 - sierra@sierramilesmusic.com',
+        title: 'Sierra Miles - 07/08/2001 - sierra@sierramilesmusic.com',
         notes: "https://striven.milesit.com/employees/sierra\nhttps://calendar.google.com",
         due: new Date().toISOString(),
         status: 'needsAction'
@@ -205,7 +230,6 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       initTheme();
-
       if (accessToken) {
         verifyAndFetchData();
       } else {
@@ -231,26 +255,60 @@
       }
     }
 
-    // Extracts first name from: "FullName - BirthDate - PrimaryEmail"
-    function extractFirstName(title) {
-      if (!title) return 'there';
-      const namePart = title.split('-')[0].trim();
-      const cleaned = namePart.replace(/^[^a-zA-Z]+/, '');
-      const firstWord = cleaned.split(/[\s,]+/)[0];
-      return firstWord ? (firstWord.charAt(0).toUpperCase() + firstWord.slice(1).toLowerCase()) : 'there';
-    }
+    // ========================================================
+    // ADVANCED TITLE PARSER (FullName - BirthDate - PrimaryEmail)
+    // ========================================================
+    function parseTaskTitle(title) {
+      if (!title) return { fullName: '(Untitled)', firstName: 'there', birthDateFormatted: '', dayOfWeek: '', email: '' };
 
-    // Extracts email from: "FullName - BirthDate - PrimaryEmail"
-    function extractEmailFromTitle(title) {
-      if (!title) return '';
-      const parts = title.split('-');
+      const parts = title.split('-').map(p => p.trim());
+      const fullName = parts[0] || '(Untitled)';
+      const rawBirthDate = parts.length >= 2 ? parts[1] : '';
+      
+      // Extract Email (Part 3 or regex match)
+      let email = '';
       if (parts.length >= 3) {
-        const candidate = parts[parts.length - 1].trim();
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (emailRegex.test(candidate)) return candidate;
+        const candidate = parts[parts.length - 1];
+        if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(candidate)) email = candidate;
       }
-      const match = title.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-      return match ? match[0].trim() : '';
+      if (!email) {
+        const match = title.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+        if (match) email = match[0];
+      }
+
+      // First name
+      const firstWord = fullName.replace(/^[^a-zA-Z]+/, '').split(/[\s,]+/)[0];
+      const firstName = firstWord ? (firstWord.charAt(0).toUpperCase() + firstWord.slice(1).toLowerCase()) : 'there';
+
+      // Parse Birthday & Day of the Week
+      let birthDateFormatted = rawBirthDate;
+      let dayOfWeek = '';
+
+      if (rawBirthDate) {
+        const dateParts = rawBirthDate.split(/[\/\-\.]/);
+        if (dateParts.length >= 2) {
+          const m = parseInt(dateParts[0], 10) - 1;
+          const d = parseInt(dateParts[1], 10);
+          const y = dateParts.length >= 3 ? parseInt(dateParts[2], 10) : new Date().getFullYear();
+
+          if (!isNaN(m) && !isNaN(d) && m >= 0 && m <= 11 && d >= 1 && d <= 31) {
+            const dateObj = new Date(y, m, d);
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+            dayOfWeek = days[dateObj.getDay()];
+            birthDateFormatted = `${months[m]} ${d}${dateParts.length >= 3 ? `, ${y}` : ''}`;
+          }
+        }
+      }
+
+      return {
+        fullName,
+        firstName,
+        birthDateFormatted,
+        dayOfWeek,
+        email
+      };
     }
 
     // Extracts Line 1 (Striven Profile) and Line 2 (Calendar) from Notes
@@ -273,13 +331,9 @@
       const date = new Date();
       const day = date.getDay(); // 0: Sun, 5: Fri, 6: Sat
 
-      if (day === 5) {
-        date.setDate(date.getDate() + 3); // Fri -> Mon
-      } else if (day === 6) {
-        date.setDate(date.getDate() + 2); // Sat -> Mon
-      } else {
-        date.setDate(date.getDate() + 1); // Mon-Thu/Sun -> Next day
-      }
+      if (day === 5) date.setDate(date.getDate() + 3);      // Fri -> Mon
+      else if (day === 6) date.setDate(date.getDate() + 2); // Sat -> Mon
+      else date.setDate(date.getDate() + 1);                // Mon-Thu/Sun -> Next day
 
       date.setHours(0, 0, 0, 0);
       return date.toISOString();
@@ -289,6 +343,9 @@
       return `${firstName}, do you happen to have a couple minutes now? If not, just DM me when you are free.`;
     }
 
+    // ========================================================
+    // GOOGLE OAUTH & API
+    // ========================================================
     function startGoogleAuth() {
       if (isLiveAccount) {
         if (confirm('Disconnect Google account and switch to demo mode?')) {
@@ -338,14 +395,14 @@
       const pill = document.getElementById('connection-pill');
 
       if (connected) {
-        authBtn.className = "flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs transition-all cursor-pointer";
+        authBtn.className = "px-3.5 py-1.5 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all cursor-pointer";
         authLabel.textContent = "Disconnect";
-        pill.className = "inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/40";
+        pill.className = "text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/40";
         pill.textContent = "Google Connected";
       } else {
-        authBtn.className = "flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-all cursor-pointer";
+        authBtn.className = "px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm shadow-blue-500/20 transition-all cursor-pointer";
         authLabel.textContent = "Connect Google";
-        pill.className = "inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900/40";
+        pill.className = "text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900/40";
         pill.textContent = "Demo Mode";
       }
     }
@@ -423,13 +480,13 @@
       renderTasks();
     }
 
+    // ========================================================
+    // SELECTION & ACTIONS
+    // ========================================================
     function toggleTaskSelection(taskId, event) {
       event.stopPropagation();
-      if (selectedTaskIds.has(taskId)) {
-        selectedTaskIds.delete(taskId);
-      } else {
-        selectedTaskIds.add(taskId);
-      }
+      if (selectedTaskIds.has(taskId)) selectedTaskIds.delete(taskId);
+      else selectedTaskIds.add(taskId);
       updateActionBar();
       renderTasks();
     }
@@ -444,11 +501,8 @@
       const visibleTasks = allTasks.filter(t => t.status !== 'completed');
       const allSelected = visibleTasks.length > 0 && visibleTasks.every(t => selectedTaskIds.has(t.id));
 
-      if (allSelected) {
-        visibleTasks.forEach(t => selectedTaskIds.delete(t.id));
-      } else {
-        visibleTasks.forEach(t => selectedTaskIds.add(t.id));
-      }
+      if (allSelected) visibleTasks.forEach(t => selectedTaskIds.delete(t.id));
+      else visibleTasks.forEach(t => selectedTaskIds.add(t.id));
 
       updateActionBar();
       renderTasks();
@@ -461,11 +515,8 @@
       const count = selectedTaskIds.size;
       countEl.textContent = count;
 
-      if (count > 0) {
-        bar.classList.remove('translate-y-32');
-      } else {
-        bar.classList.add('translate-y-32');
-      }
+      if (count > 0) bar.classList.remove('translate-y-32');
+      else bar.classList.add('translate-y-32');
 
       const visibleTasks = allTasks.filter(t => t.status !== 'completed');
       const allSelected = visibleTasks.length > 0 && visibleTasks.every(t => selectedTaskIds.has(t.id));
@@ -473,7 +524,7 @@
     }
 
     // ========================================================
-    // SILENT CHAT DISPATCH & RESCHEDULE TO NEXT BUSINESS DAY
+    // SILENT CHAT DISPATCH & RESCHEDULE
     // ========================================================
     async function dispatchChatAndReschedule() {
       const selectedTasks = allTasks.filter(t => selectedTaskIds.has(t.id));
@@ -486,18 +537,17 @@
         day: 'numeric'
       });
 
-      const confirmed = confirm(`Send Google Chat DMs to ${selectedTasks.length} people and reschedule their tasks to ${dateFormatted}?`);
+      const confirmed = confirm(`Send personalized Google Chat DMs to ${selectedTasks.length} people and roll their follow-ups to ${dateFormatted}?`);
       if (!confirmed) return;
 
       const actionBtn = document.getElementById('btn-dispatch-dms');
       actionBtn.disabled = true;
-      actionBtn.innerHTML = `<span>Sending & Rescheduling...</span>`;
+      actionBtn.innerHTML = `<span>Sending Outreach...</span>`;
       setSyncStatus('Dispatching...');
 
       const recipients = [];
       selectedTasks.forEach(task => {
-        const firstName = extractFirstName(task.title);
-        const email = extractEmailFromTitle(task.title);
+        const { firstName, email } = parseTaskTitle(task.title);
         if (email) {
           recipients.push({
             email: email,
@@ -521,7 +571,6 @@
 
       for (const task of selectedTasks) {
         task.due = nextBusinessDateISO;
-
         if (isLiveAccount) {
           try {
             await apiRequest(`/lists/${task.listId}/tasks/${task.id}`, {
@@ -541,82 +590,113 @@
       setSyncStatus('Synced');
       renderTasks();
 
-      alert(`✅ Finished! Dispatched outreach and moved ${selectedTasks.length} tasks to ${dateFormatted}.`);
+      alert(`✅ Finished! Outreach sent and moved ${selectedTasks.length} tasks to ${dateFormatted}.`);
     }
 
+    // ========================================================
+    // RENDER TASKS (PARSED UI)
+    // ========================================================
     function renderTasks() {
       const container = document.getElementById('tasks-container');
       const emptyState = document.getElementById('empty-state');
       container.innerHTML = '';
 
       const todayStr = new Date().toISOString().split('T')[0];
-      let filtered = allTasks.filter(t => t.status !== 'completed');
+      let openTasks = allTasks.filter(t => t.status !== 'completed');
 
-      filtered.sort((a, b) => {
+      // Update counters
+      document.getElementById('stat-total').textContent = openTasks.length;
+      document.getElementById('stat-today').textContent = openTasks.filter(t => t.due && t.due.split('T')[0] === todayStr).length;
+
+      openTasks.sort((a, b) => {
         if (sortOption === 'due-asc') {
           if (!a.due) return 1; if (!b.due) return -1;
           return new Date(a.due) - new Date(b.due);
         } else if (sortOption === 'due-desc') {
           if (!a.due) return 1; if (!b.due) return -1;
           return new Date(b.due) - new Date(a.due);
-        } else if (sortOption === 'title') {
-          return a.title.localeCompare(b.title);
+        } else if (sortOption === 'name') {
+          const nameA = parseTaskTitle(a.title).fullName;
+          const nameB = parseTaskTitle(b.title).fullName;
+          return nameA.localeCompare(nameB);
         }
         return 0;
       });
 
-      if (filtered.length === 0) {
+      if (openTasks.length === 0) {
         emptyState.classList.remove('hidden');
       } else {
         emptyState.classList.add('hidden');
       }
 
-      filtered.forEach(task => {
+      openTasks.forEach(task => {
         const isSelected = selectedTaskIds.has(task.id);
-        const extractedEmail = extractEmailFromTitle(task.title);
+        const { fullName, firstName, birthDateFormatted, dayOfWeek, email } = parseTaskTitle(task.title);
         const { profileUrl, calendarUrl } = extractProfileAndCalendar(task.notes);
 
+        // Due date badge
         let dueBadge = '';
         if (task.due) {
           const taskDueDate = task.due.split('T')[0];
           const dateFormatted = new Date(task.due).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 
           if (taskDueDate < todayStr) {
-            dueBadge = `<span class="inline-flex items-center text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50 px-2 py-1 rounded-lg">⚠️ Overdue: ${dateFormatted}</span>`;
+            dueBadge = `<span class="inline-flex items-center text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50 px-2.5 py-1 rounded-xl">⚠️ Overdue: ${dateFormatted}</span>`;
           } else if (taskDueDate === todayStr) {
-            dueBadge = `<span class="inline-flex items-center text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-1 rounded-lg">⏱️ Today</span>`;
+            dueBadge = `<span class="inline-flex items-center text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-1 rounded-xl">⏱️ Due Today</span>`;
           } else {
-            dueBadge = `<span class="inline-flex items-center text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg">📅 ${dateFormatted}</span>`;
+            dueBadge = `<span class="inline-flex items-center text-xs font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-xl">📅 ${dateFormatted}</span>`;
           }
         }
 
-        const emailErrorBadge = !extractedEmail 
-          ? `<span class="inline-flex items-center text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 px-2 py-1 rounded-lg border border-rose-200/50 dark:border-rose-900/50">⚠️ Missing Email in Title</span>`
+        // Email error badge (only displayed if missing)
+        const emailErrorBadge = !email 
+          ? `<span class="inline-flex items-center text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 px-2.5 py-1 rounded-xl border border-rose-200/50 dark:border-rose-900/50">⚠️ Missing Email in Title</span>`
           : '';
 
+        // Profile button
         const profileBtn = profileUrl ? `
-          <a href="${profileUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-xs font-semibold transition-colors border border-blue-200/60 dark:border-blue-800/50 shadow-xs" title="Open Striven Profile">
+          <a href="${profileUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-xl bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/40 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 text-xs font-bold transition-colors border border-blue-200/60 dark:border-blue-800/60" title="Open Striven Profile">
             <span>👤</span>
             <span>Profile</span>
           </a>
         ` : '';
 
+        // Calendar button
         const calendarBtn = calendarUrl ? `
-          <a href="${calendarUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-xs font-semibold transition-colors border border-emerald-200/60 dark:border-emerald-800/50 shadow-xs" title="Open Calendar">
+          <a href="${calendarUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/40 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 text-xs font-bold transition-colors border border-emerald-200/60 dark:border-emerald-800/60" title="Open Calendar">
             <span>📅</span>
             <span>Calendar</span>
           </a>
         ` : '';
 
+        // Initials Avatar
+        const initials = fullName
+          .split(' ')
+          .map(n => n[0])
+          .slice(0, 2)
+          .join('')
+          .toUpperCase() || '👤';
+
+        // Birthday formatting
+        const bdayDisplay = birthDateFormatted 
+          ? `<div class="mt-1 flex items-center text-sm font-semibold text-indigo-600 dark:text-indigo-400">
+               <span class="mr-1.5">🎂</span>
+               <span>${escapeHtml(birthDateFormatted)}</span>
+               ${dayOfWeek ? `<span class="ml-1.5 font-bold text-indigo-500/80 dark:text-indigo-300/80">(${dayOfWeek})</span>` : ''}
+             </div>`
+          : '';
+
         const taskCard = document.createElement('div');
         taskCard.id = `task-card-${task.id}`;
-        taskCard.className = `group border rounded-2xl p-4 shadow-sm transition-all flex items-start space-x-3.5 ${
+        taskCard.className = `group border rounded-2xl p-4 transition-all flex items-start space-x-3.5 ${
           isSelected 
-            ? 'bg-blue-50/70 border-blue-400 dark:bg-blue-950/30 dark:border-blue-600 shadow-md ring-1 ring-blue-400' 
-            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:shadow-md'
+            ? 'bg-blue-50/70 border-blue-400 dark:bg-blue-950/40 dark:border-blue-600 shadow-md ring-1 ring-blue-400' 
+            : 'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-sm'
         }`;
 
         taskCard.innerHTML = `
+          <!-- Custom Selection Checkbox -->
           <input 
             type="checkbox" 
             class="mt-1 w-4 h-4 rounded text-blue-600 border-slate-300 dark:border-slate-600 cursor-pointer focus:ring-blue-500"
@@ -624,24 +704,46 @@
             title="Select for Outreach"
           />
 
-          <button class="btn-complete mt-0.5 w-5 h-5 rounded-lg border-2 border-slate-300 dark:border-slate-600 hover:border-blue-600 dark:hover:border-blue-500 flex items-center justify-center transition-colors shrink-0 cursor-pointer" title="Mark completed">
+          <!-- Complete Checkbox -->
+          <button class="btn-complete mt-0.5 w-5 h-5 rounded-lg border-2 border-slate-300 dark:border-slate-600 hover:border-blue-600 dark:hover:border-blue-500 flex items-center justify-center transition-colors shrink-0 cursor-pointer" title="Mark Completed">
             <span class="text-xs text-white opacity-0 check-mark">✓</span>
           </button>
 
+          <!-- Card Content Body -->
           <div class="flex-1 min-w-0 cursor-pointer btn-open-edit">
-            <div class="flex items-start justify-between gap-2">
-              <h4 class="text-sm font-semibold text-slate-900 dark:text-slate-100 leading-snug break-words">
-                ${escapeHtml(task.title)}
-              </h4>
-              <button class="p-1 rounded-lg text-slate-400 hover:text-blue-600 text-xs" title="Edit task">✏️</button>
-            </div>
             
-            <!-- Unified Single Row: Profile, Calendar, Alerts, and Due Date -->
-            <div class="mt-2.5 flex flex-wrap items-center gap-2">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-center space-x-3">
+                <!-- Avatar -->
+                <div class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center font-bold text-xs tracking-wider shrink-0 border border-slate-200/60 dark:border-slate-700/60">
+                  ${initials}
+                </div>
+                
+                <div>
+                  <!-- Big Employee Name -->
+                  <h3 class="text-base font-extrabold text-slate-900 dark:text-white leading-tight">
+                    ${escapeHtml(fullName)}
+                  </h3>
+                  <!-- Big Birthday & Day of the Week -->
+                  ${bdayDisplay}
+                </div>
+              </div>
+
+              <!-- Quick Edit Icon -->
+              <button class="p-1 rounded-lg text-slate-300 dark:text-slate-600 hover:text-blue-600 dark:hover:text-blue-400 text-xs transition-colors" title="Edit Task">✏️</button>
+            </div>
+
+            <!-- Action & Link Row -->
+            <div class="mt-3.5 flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/80">
               ${profileBtn}
               ${calendarBtn}
               ${dueBadge}
               ${emailErrorBadge}
+
+              <!-- DM Preview Tooltip / Pill -->
+              <span class="ml-auto text-[11px] font-medium text-slate-400 dark:text-slate-500 truncate max-w-[220px]" title="${escapeHtml(generateChatMessage(firstName))}">
+                Preview: "${escapeHtml(firstName)}, do you happen..."
+              </span>
             </div>
           </div>
         `;
@@ -671,7 +773,7 @@
       checkbox.classList.add('bg-blue-600', 'border-blue-600');
       const checkMark = checkbox.querySelector('.check-mark');
       if (checkMark) checkMark.classList.remove('opacity-0');
-      cardElement.style.opacity = '0.4';
+      cardElement.style.opacity = '0.35';
       cardElement.style.transform = 'scale(0.98)';
       cardElement.style.transition = 'all 0.25s ease';
 
@@ -707,7 +809,7 @@
         const task = allTasks.find(t => t.id === taskId);
         if (!task) return;
 
-        modalTitle.textContent = 'Edit Task Details';
+        modalTitle.textContent = 'Edit Follow-Up Details';
         document.getElementById('form-task-id').value = task.id;
         document.getElementById('form-title').value = task.title;
         document.getElementById('form-notes').value = task.notes || '';
@@ -717,7 +819,7 @@
         deleteBtn.classList.remove('hidden');
         deleteBtn.onclick = () => deleteTask(task.id);
       } else {
-        modalTitle.textContent = 'Create New Task';
+        modalTitle.textContent = 'Create Follow-Up';
         document.getElementById('form-task-id').value = '';
         document.getElementById('form-list-id').value = taskLists[0]?.id || 'list-default';
         document.getElementById('form-due-date').value = '';
