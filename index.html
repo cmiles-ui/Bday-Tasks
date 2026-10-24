@@ -22,8 +22,6 @@
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
     .dark ::-webkit-scrollbar-thumb { background: #475569; }
-    .note-content a { color: #2563eb; text-decoration: underline; word-break: break-all; }
-    .dark .note-content a { color: #60a5fa; }
   </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 h-screen flex flex-col font-sans antialiased overflow-hidden">
@@ -46,7 +44,7 @@
         type="text" 
         id="search-input" 
         placeholder="Search tasks, notes, or employee names..." 
-        class="w-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:white placeholder-slate-400 px-4 py-1.5 rounded-xl text-sm border-0 focus:ring-2 focus:ring-blue-500 outline-none"
+        class="w-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 px-4 py-1.5 rounded-xl text-sm border-0 focus:ring-2 focus:ring-blue-500 outline-none"
       />
     </div>
 
@@ -221,9 +219,9 @@
 
         <div>
           <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-            Notes / Details <span class="text-slate-400 font-normal">(Optional context)</span>
+            Notes <span class="text-blue-600 dark:text-blue-400 font-normal">(Line 1: Striven URL, Line 2: Calendar URL)</span>
           </label>
-          <textarea id="form-notes" rows="4" placeholder="Additional notes or context for this person..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 font-sans"></textarea>
+          <textarea id="form-notes" rows="4" placeholder="https://striven.com/employee/12345&#10;https://calendar.google.com/calendar/u/0/r" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 font-sans"></textarea>
         </div>
 
         <div class="pt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800">
@@ -267,7 +265,7 @@
         id: 't-1',
         listId: 'list-default',
         title: 'Sierra Miles - 05/14/1995 - sierra@sierramilesmusic.com',
-        notes: "Discuss music projects and upcoming schedule.",
+        notes: "https://striven.milesit.com/employees/sierra\nhttps://calendar.google.com",
         due: new Date().toISOString(),
         status: 'needsAction'
       },
@@ -275,7 +273,7 @@
         id: 't-2',
         listId: 'list-default',
         title: 'David Smith - 11/20/1988 - david@company.com',
-        notes: "Review draft deliverables.",
+        notes: "https://striven.milesit.com/employees/david\nhttps://calendar.google.com",
         due: new Date().toISOString(),
         status: 'needsAction'
       }
@@ -328,9 +326,24 @@
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (emailRegex.test(candidate)) return candidate;
       }
-      // Fallback: search for any standard email pattern in the title string
       const match = title.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
       return match ? match[0].trim() : '';
+    }
+
+    // Extracts Line 1 (Striven Profile) and Line 2 (Calendar) from Notes
+    function extractProfileAndCalendar(notes) {
+      if (!notes) return { profileUrl: '', calendarUrl: '' };
+      const lines = notes.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      
+      const formatLink = (url) => {
+        if (!url) return '';
+        return url.startsWith('http') ? url : `https://${url}`;
+      };
+
+      return {
+        profileUrl: lines.length > 0 ? formatLink(lines[0]) : '',
+        calendarUrl: lines.length > 1 ? formatLink(lines[1]) : ''
+      };
     }
 
     function getNextBusinessDateISO() {
@@ -530,21 +543,6 @@
       document.getElementById('count-overdue').textContent = openTasks.filter(t => t.due && t.due.split('T')[0] < todayStr).length;
     }
 
-    function formatNotesWithLinks(text) {
-      if (!text) return '';
-      const escaped = text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-      
-      const urlRegex = /(https?:\/\/[^\s<]+)/g;
-      return escaped.replace(urlRegex, (url) => {
-        return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="hover:underline font-medium">${url}</a>`;
-      });
-    }
-
     function toggleTaskSelection(taskId, event) {
       event.stopPropagation();
       if (selectedTaskIds.has(taskId)) {
@@ -726,6 +724,7 @@
         const isSelected = selectedTaskIds.has(task.id);
         const firstName = extractFirstName(task.title);
         const extractedEmail = extractEmailFromTitle(task.title);
+        const { profileUrl, calendarUrl } = extractProfileAndCalendar(task.notes);
 
         let dueBadge = '';
         if (task.due) {
@@ -741,6 +740,25 @@
           }
         }
 
+        const emailBadge = extractedEmail 
+          ? `<span class="inline-flex items-center text-xs font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-md">✉️ ${escapeHtml(extractedEmail)}</span>`
+          : `<span class="inline-flex items-center text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-md">⚠️ No Email in Task Title</span>`;
+
+        // Render profile and calendar quick buttons if links exist in notes
+        const profileBtn = profileUrl ? `
+          <a href="${profileUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-xs font-semibold transition-colors border border-blue-200/60 dark:border-blue-800/50 shadow-xs" title="Open Striven Profile">
+            <span>👤</span>
+            <span>Profile</span>
+          </a>
+        ` : '';
+
+        const calendarBtn = calendarUrl ? `
+          <a href="${calendarUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-xs font-semibold transition-colors border border-emerald-200/60 dark:border-emerald-800/50 shadow-xs" title="Open Calendar">
+            <span>📅</span>
+            <span>Calendar</span>
+          </a>
+        ` : '';
+
         const taskCard = document.createElement('div');
         taskCard.id = `task-card-${task.id}`;
         taskCard.className = `group border rounded-2xl p-4 shadow-sm transition-all flex items-start space-x-3.5 ${
@@ -748,17 +766,6 @@
             ? 'bg-blue-50/70 border-blue-400 dark:bg-blue-950/30 dark:border-blue-600 shadow-md ring-1 ring-blue-400' 
             : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:shadow-md'
         }`;
-
-        const formattedNotes = formatNotesWithLinks(task.notes);
-        const notesSection = formattedNotes ? `
-          <div class="note-content mt-2 text-xs text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap font-sans bg-slate-50/70 dark:bg-slate-800/40 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800/80">
-            ${formattedNotes}
-          </div>
-        ` : '';
-
-        const emailBadge = extractedEmail 
-          ? `<span class="inline-flex items-center text-xs font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-md">✉️ ${escapeHtml(extractedEmail)}</span>`
-          : `<span class="inline-flex items-center text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-md">⚠️ No Email in Task Title</span>`;
 
         taskCard.innerHTML = `
           <input 
@@ -780,7 +787,13 @@
               <button class="p-1 rounded-lg text-slate-400 hover:text-blue-600 text-xs" title="Edit task">✏️</button>
             </div>
             
-            ${notesSection}
+            <!-- Quick Link Buttons for Striven Profile & Calendar -->
+            ${(profileBtn || calendarBtn) ? `
+              <div class="mt-2.5 flex items-center gap-2">
+                ${profileBtn}
+                ${calendarBtn}
+              </div>
+            ` : ''}
             
             <div class="mt-2.5 flex flex-wrap items-center gap-2">
               <span class="inline-flex items-center text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-md">
@@ -804,7 +817,7 @@
         };
 
         taskCard.querySelector('.btn-open-edit').onclick = (e) => {
-          if (e.target.tagName.toLowerCase() === 'a') return;
+          if (e.target.closest('a')) return;
           openTaskModal(task.id);
         };
 
