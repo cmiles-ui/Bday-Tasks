@@ -207,7 +207,7 @@
     let taskLists = [];
     let allTasks = [];
     let selectedTaskIds = new Set();
-    let strivenEmployeeDirectory = {}; // Cache indexed by normalized email and name
+    let strivenEmployeeDirectory = {};
 
     const DEMO_LISTS = [{ id: 'list-default', title: 'Team Outreach' }];
     const DEMO_TASKS = [
@@ -257,9 +257,6 @@
       }
     }
 
-    // ========================================================
-    // STRIVEN DIRECTORY FETCH
-    // ========================================================
     async function fetchStrivenDirectory() {
       try {
         const res = await fetch(APPS_SCRIPT_WEBAPP_URL);
@@ -267,7 +264,6 @@
         const records = Array.isArray(data) ? data : (data.data || data.items || data.results || []);
 
         records.forEach(emp => {
-          // Find email field across possible naming styles
           const email = (emp.Email || emp.PrimaryEmail || emp.email || emp['Email Address'] || emp['Work Email'] || '').toLowerCase().trim();
           const name = (emp.Name || emp.FullName || emp['Employee Name'] || `${emp.FirstName || ''} ${emp.LastName || ''}`).toLowerCase().trim();
 
@@ -289,7 +285,6 @@
       }
     }
 
-    // Title Parser: FullName - BirthDate - PrimaryEmail
     function parseTaskTitle(title) {
       if (!title) return { fullName: '(Untitled)', firstName: 'there', birthDateFormatted: '', dayOfWeek: '', email: '' };
 
@@ -331,13 +326,7 @@
         }
       }
 
-      return {
-        fullName,
-        firstName,
-        birthDateFormatted,
-        dayOfWeek,
-        email
-      };
+      return { fullName, firstName, birthDateFormatted, dayOfWeek, email };
     }
 
     function extractProfileAndCalendar(notes) {
@@ -512,7 +501,6 @@
       renderTasks();
     }
 
-    // Selection & Batch
     function toggleTaskSelection(taskId, event) {
       event.stopPropagation();
       if (selectedTaskIds.has(taskId)) selectedTaskIds.delete(taskId);
@@ -553,7 +541,6 @@
       selectAllBtn.textContent = allSelected ? 'Deselect All' : 'Select All';
     }
 
-    // Single Task Send & Reschedule
     async function sendSingleDM(taskId, event) {
       event.stopPropagation();
       const task = allTasks.find(t => t.id === taskId);
@@ -612,7 +599,6 @@
       renderTasks();
     }
 
-    // Batch Dispatch & Reschedule
     async function dispatchChatAndReschedule() {
       const selectedTasks = allTasks.filter(t => selectedTaskIds.has(t.id));
       if (selectedTasks.length === 0) return;
@@ -681,7 +667,7 @@
     }
 
     // ========================================================
-    // RENDER TASKS WITH STRIVEN PROFILE ENRICHMENT
+    // RENDER TASKS (LEFT-JUSTIFIED & VERTICALLY ALIGNED)
     // ========================================================
     function renderTasks() {
       const container = document.getElementById('tasks-container');
@@ -720,7 +706,6 @@
         const { fullName, firstName, birthDateFormatted, dayOfWeek, email } = parseTaskTitle(task.title);
         const { profileUrl, calendarUrl } = extractProfileAndCalendar(task.notes);
 
-        // Fetch matched Striven info from directory cache
         const strivenData = strivenEmployeeDirectory[(email || '').toLowerCase()] || 
                             strivenEmployeeDirectory[(fullName || '').toLowerCase()] || {};
 
@@ -730,6 +715,14 @@
         const managerName = strivenData.managerName || '';
         const employeeAddress = strivenData.employeeAddress || '';
         const picturePath = strivenData.picturePath || '';
+
+        // Initials fallback
+        const initials = fullName
+          .split(' ')
+          .map(n => n[0])
+          .slice(0, 2)
+          .join('')
+          .toUpperCase() || '👤';
 
         // Due date badge
         let dueBadge = '';
@@ -758,7 +751,7 @@
         ` : '';
 
         const bdayDisplay = birthDateFormatted 
-          ? `<div class="mt-0.5 flex items-center text-xs sm:text-sm font-semibold text-indigo-600 dark:text-indigo-400">
+          ? `<div class="mt-1 flex items-center text-xs sm:text-sm font-semibold text-indigo-600 dark:text-indigo-400 text-left">
                <span class="mr-1">🎂</span>
                <span>${escapeHtml(birthDateFormatted)}</span>
                ${dayOfWeek ? `<span class="ml-1 text-xs font-bold text-indigo-500/80 dark:text-indigo-300/80">(${dayOfWeek})</span>` : ''}
@@ -766,15 +759,14 @@
           : '';
 
         const nameElement = profileUrl
-          ? `<a href="${profileUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="text-base font-extrabold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 leading-tight transition-colors inline-flex items-center gap-1 group/link" title="Open Striven Profile">
+          ? `<a href="${profileUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="text-base font-extrabold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 leading-tight transition-colors inline-flex items-center gap-1 group/link text-left" title="Open Striven Profile">
                <span>${escapeHtml(fullName)}</span>
                <span class="text-xs text-slate-400 group-hover/link:text-blue-500 transition-colors">↗</span>
              </a>`
-          : `<h3 class="text-base font-extrabold text-slate-900 dark:text-white leading-tight">
+          : `<h3 class="text-base font-extrabold text-slate-900 dark:text-white leading-tight text-left">
                ${escapeHtml(fullName)}
              </h3>`;
 
-        // 1-Click Send Button
         const singleSendBtn = email ? `
           <button onclick="sendSingleDM('${task.id}', event)" class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-xl bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white dark:bg-blue-950/60 dark:hover:bg-blue-600 dark:text-blue-300 dark:hover:text-white text-xs font-bold border border-blue-200 dark:border-blue-800/60 transition-all cursor-pointer shadow-xs active:scale-95" title="Send DM & reschedule this task to next business day">
             <span>💬</span>
@@ -783,13 +775,13 @@
           </button>
         ` : '';
 
-        // Avatar Image if Picture Path exists
-        const avatarImage = picturePath 
-          ? `<img src="${escapeHtml(picturePath)}" alt="${escapeHtml(fullName)}" class="w-12 h-12 rounded-2xl object-cover shrink-0 border border-slate-200 dark:border-slate-700 shadow-xs" onerror="this.style.display='none'" />` 
-          : '';
+        // Fixed-width photo or placeholder slot for consistent vertical alignment
+        const avatarSlot = picturePath
+          ? `<img src="${escapeHtml(picturePath)}" alt="${escapeHtml(fullName)}" class="w-12 h-12 rounded-2xl object-cover shrink-0 border border-slate-200 dark:border-slate-700 shadow-xs" onerror="this.outerHTML='<div class=\\'w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center font-bold text-xs tracking-wider shrink-0 border border-slate-200/60 dark:border-slate-700/60\\'>${initials}</div>'" />`
+          : `<div class="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center font-bold text-xs tracking-wider shrink-0 border border-slate-200/60 dark:border-slate-700/60">${initials}</div>`;
 
         const roleDeptText = (jobTitle || department) 
-          ? `<p class="text-xs font-medium text-slate-500 dark:text-slate-400 leading-tight">
+          ? `<p class="text-xs font-medium text-slate-500 dark:text-slate-400 leading-tight text-left mt-0.5">
                ${escapeHtml(jobTitle)}${jobTitle && department ? ' • ' : ''}${escapeHtml(department)}
              </p>` 
           : '';
@@ -814,41 +806,46 @@
 
         const taskCard = document.createElement('div');
         taskCard.id = `task-card-${task.id}`;
-        taskCard.className = `group border rounded-2xl p-4 transition-all flex items-start space-x-3.5 ${
+        taskCard.className = `group border rounded-2xl p-4 transition-all flex items-start space-x-3.5 text-left ${
           isSelected 
             ? 'bg-blue-50/70 border-blue-400 dark:bg-blue-950/40 dark:border-blue-600 shadow-md ring-1 ring-blue-400' 
             : 'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-sm'
         }`;
 
         taskCard.innerHTML = `
-          <input 
-            type="checkbox" 
-            class="mt-1 w-4 h-4 rounded text-blue-600 border-slate-300 dark:border-slate-600 cursor-pointer focus:ring-blue-500"
-            ${isSelected ? 'checked' : ''}
-            title="Select for Outreach"
-          />
+          <!-- Checkbox Left Anchor -->
+          <div class="flex items-center space-x-2.5 shrink-0 pt-1">
+            <input 
+              type="checkbox" 
+              class="w-4 h-4 rounded text-blue-600 border-slate-300 dark:border-slate-600 cursor-pointer focus:ring-blue-500"
+              ${isSelected ? 'checked' : ''}
+              title="Select for Outreach"
+            />
+            <button class="btn-complete w-5 h-5 rounded-lg border-2 border-slate-300 dark:border-slate-600 hover:border-blue-600 dark:hover:border-blue-500 flex items-center justify-center transition-colors shrink-0 cursor-pointer" title="Mark Completed">
+              <span class="text-xs text-white opacity-0 check-mark">✓</span>
+            </button>
+          </div>
 
-          <button class="btn-complete mt-0.5 w-5 h-5 rounded-lg border-2 border-slate-300 dark:border-slate-600 hover:border-blue-600 dark:hover:border-blue-500 flex items-center justify-center transition-colors shrink-0 cursor-pointer" title="Mark Completed">
-            <span class="text-xs text-white opacity-0 check-mark">✓</span>
-          </button>
+          <!-- Fixed-Width Avatar Slot -->
+          <div class="w-12 h-12 shrink-0 flex items-center justify-center">
+            ${avatarSlot}
+          </div>
 
-          <div class="flex-1 min-w-0 cursor-pointer btn-open-edit">
+          <!-- Flush Left-Aligned Employee Content Column -->
+          <div class="flex-1 min-w-0 cursor-pointer btn-open-edit text-left">
             <div class="flex items-start justify-between gap-3">
-              <div class="flex items-start space-x-3 min-w-0">
-                ${avatarImage}
-                <div class="min-w-0">
-                  ${nameElement}
-                  ${roleDeptText}
-                  ${bdayDisplay}
-                </div>
+              <div class="min-w-0 text-left">
+                ${nameElement}
+                ${roleDeptText}
+                ${bdayDisplay}
               </div>
 
-              <button class="p-1 rounded-lg text-slate-300 dark:text-slate-600 hover:text-blue-600 dark:hover:text-blue-400 text-xs transition-colors" title="Edit Task">✏️</button>
+              <button class="p-1 rounded-lg text-slate-300 dark:text-slate-600 hover:text-blue-600 dark:hover:text-blue-400 text-xs transition-colors shrink-0" title="Edit Task">✏️</button>
             </div>
 
-            <!-- Striven Details Row (Hire Date, Manager, Address) -->
+            <!-- Striven Details Row -->
             ${(hireDateBadge || managerBadge || addressBadge) ? `
-              <div class="mt-2.5 flex flex-wrap items-center gap-1.5">
+              <div class="mt-2.5 flex flex-wrap items-center gap-1.5 text-left">
                 ${hireDateBadge}
                 ${managerBadge}
                 ${addressBadge}
@@ -856,7 +853,7 @@
             ` : ''}
 
             <!-- Action & Link Row -->
-            <div class="mt-3.5 flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+            <div class="mt-3.5 flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/80 text-left">
               ${singleSendBtn}
               ${calendarBtn}
               ${dueBadge}
