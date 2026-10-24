@@ -29,43 +29,18 @@
     }
   </script>
   <style>
-    /* Custom scrollbar styling */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #cbd5e1;
-      border-radius: 9999px;
-    }
-    .dark ::-webkit-scrollbar-thumb {
-      background: #475569;
-    }
-    .task-enter {
-      animation: fadeIn 0.2s ease-in-out;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-4px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    /* Auto link styling within task notes */
-    .note-content a {
-      color: #2563eb;
-      text-decoration: underline;
-      word-break: break-all;
-    }
-    .dark .note-content a {
-      color: #60a5fa;
-    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+    .dark ::-webkit-scrollbar-thumb { background: #475569; }
+    .note-content a { color: #2563eb; text-decoration: underline; word-break: break-all; }
+    .dark .note-content a { color: #60a5fa; }
   </style>
 </head>
-<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen flex flex-col font-sans antialiased transition-colors duration-200">
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 h-screen flex flex-col font-sans antialiased transition-colors duration-200 overflow-hidden">
 
-  <!-- TOP HEADER / NAV -->
-  <header class="sticky top-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200 dark:border-slate-800 px-4 lg:px-6 py-3 flex items-center justify-between">
+  <!-- TOP HEADER -->
+  <header class="shrink-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 lg:px-6 py-3 flex items-center justify-between z-20">
     <div class="flex items-center space-x-3">
       <button id="mobile-menu-btn" class="lg:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300">
         <i data-lucide="menu" class="w-5 h-5"></i>
@@ -95,3 +70,190 @@
           <i data-lucide="x" class="w-3.5 h-3.5"></i>
         </button>
       </div>
+    </div>
+
+    <!-- Right Controls -->
+    <div class="flex items-center space-x-2">
+      <button id="theme-toggle" class="p-2 rounded-xl text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors" title="Toggle Theme">
+        <i data-lucide="moon" class="w-5 h-5 dark:hidden"></i>
+        <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+      </button>
+      <div id="auth-container">
+        <button id="auth-btn" class="flex items-center space-x-2 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition-all">
+          <i data-lucide="log-in" class="w-4 h-4"></i>
+          <span>Connect Google</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- BANNER -->
+  <div id="status-banner" class="shrink-0 bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-900/50 px-4 py-2 text-xs text-amber-800 dark:text-amber-300 flex items-center justify-between z-10">
+    <div class="flex items-center space-x-2 truncate">
+      <i data-lucide="info" class="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400"></i>
+      <span id="banner-text">Viewing offline sample tasks. Connect your Google account to manage your live tasks.</span>
+    </div>
+    <button id="banner-action-btn" class="font-semibold underline ml-3 shrink-0 hover:text-amber-900 dark:hover:text-amber-100">
+      Sign In
+    </button>
+  </div>
+
+  <!-- MAIN BODY -->
+  <div class="flex-1 flex overflow-hidden">
+    <!-- SIDEBAR -->
+    <aside id="sidebar" class="w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col shrink-0 lg:static fixed inset-y-0 left-0 z-40 transform -translate-x-full lg:translate-x-0 transition-transform duration-200 pt-16 lg:pt-0">
+      <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+        <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Quick Views</h2>
+      </div>
+
+      <div class="px-2 py-3 space-y-0.5">
+        <button data-filter="all-open" class="filter-btn active w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-colors bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+          <div class="flex items-center space-x-2.5">
+            <i data-lucide="inbox" class="w-4 h-4"></i>
+            <span>All Open Tasks</span>
+          </div>
+          <span id="count-all-open" class="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-800/50 font-semibold">0</span>
+        </button>
+        <button data-filter="today" class="filter-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-colors text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60">
+          <div class="flex items-center space-x-2.5">
+            <i data-lucide="calendar" class="w-4 h-4 text-emerald-500"></i>
+            <span>Due Today</span>
+          </div>
+          <span id="count-today" class="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 font-semibold">0</span>
+        </button>
+        <button data-filter="overdue" class="filter-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-colors text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60">
+          <div class="flex items-center space-x-2.5">
+            <i data-lucide="alert-circle" class="w-4 h-4 text-rose-500"></i>
+            <span>Overdue</span>
+          </div>
+          <span id="count-overdue" class="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 font-semibold">0</span>
+        </button>
+      </div>
+
+      <div class="mt-4 px-4 flex items-center justify-between">
+        <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Lists</h2>
+        <button id="add-list-btn" class="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800" title="New List">
+          <i data-lucide="plus" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div id="lists-container" class="flex-1 overflow-y-auto px-2 py-2 space-y-0.5"></div>
+
+      <div class="p-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-400">
+        <span id="sync-status">Ready</span>
+        <button id="refresh-btn" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300" title="Refresh Tasks">
+          <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i>
+        </button>
+      </div>
+    </aside>
+
+    <div id="sidebar-backdrop" class="fixed inset-0 bg-slate-900/40 z-30 hidden lg:hidden"></div>
+
+    <!-- MAIN TASK CONTENT -->
+    <main class="flex-1 flex flex-col min-w-0 bg-slate-50 dark:bg-slate-950 overflow-y-auto">
+      <div class="max-w-4xl w-full mx-auto p-4 md:p-6 lg:p-8 flex-1 flex flex-col space-y-6">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h2 id="current-view-title" class="text-2xl font-bold text-slate-900 dark:text-white">All Open Tasks</h2>
+            <p id="current-view-desc" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Viewing all active, uncompleted tasks across lists</p>
+          </div>
+          
+          <div class="flex items-center space-x-2">
+            <select id="sort-select" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+              <option value="due-asc">Sort: Due Date (Earliest)</option>
+              <option value="due-desc">Sort: Due Date (Latest)</option>
+              <option value="title">Sort: Alphabetical</option>
+              <option value="list">Sort: By List</option>
+            </select>
+
+            <button id="btn-open-new-task" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition-all">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span>New Task</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Add Bar -->
+        <div class="relative bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-2 flex items-center transition-all focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500">
+          <div class="pl-2 pr-1 text-slate-400">
+            <i data-lucide="plus-circle" class="w-5 h-5"></i>
+          </div>
+          <input 
+            type="text" 
+            id="quick-task-title" 
+            placeholder="Add an open task quickly... (Press Enter)" 
+            class="flex-1 bg-transparent px-2 py-1.5 text-sm outline-none text-slate-800 dark:text-slate-100 placeholder-slate-400"
+          />
+          <button id="quick-task-submit" class="p-1.5 rounded-xl text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/50 transition-colors">
+            <i data-lucide="corner-down-left" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <!-- Task List -->
+        <div class="flex-1">
+          <div id="empty-state" class="hidden py-16 flex flex-col items-center justify-center text-center">
+            <div class="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-3">
+              <i data-lucide="check-check" class="w-7 h-7"></i>
+            </div>
+            <h3 class="text-base font-semibold text-slate-800 dark:text-slate-200">No open tasks found</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 max-w-xs mt-1">You're all caught up! Create a new task or switch to another view or list.</p>
+          </div>
+
+          <div id="tasks-container" class="space-y-3 pb-12"></div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- MODAL -->
+  <div id="task-modal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-xl relative">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <h3 id="modal-task-title" class="text-base font-bold text-slate-900 dark:text-white">Create Task</h3>
+        <button id="btn-close-modal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="task-form" class="mt-4 space-y-4">
+        <input type="hidden" id="form-task-id" />
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Title *</label>
+          <input type="text" id="form-title" required placeholder="e.g., Review project design specs" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Target List</label>
+            <select id="form-list-id" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Due Date</label>
+            <input type="date" id="form-due-date" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Notes / Details</label>
+          <textarea id="form-notes" rows="5" placeholder="Add full notes, descriptions, links, or bullet points here..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans"></textarea>
+        </div>
+
+        <div class="pt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800">
+          <button type="button" id="btn-delete-task" class="hidden text-xs text-rose-600 hover:text-rose-700 dark:text-rose-400 font-semibold flex items-center space-x-1">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+            <span>Delete</span>
+          </button>
+          <div class="flex items-center space-x-2 ml-auto">
+            <button type="button" id="btn-cancel-modal" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">Cancel</button>
+            <button type="submit" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition-all">Save Task</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- SCRIPT -->
+  <script>
+    const GOOGLE_CLIENT_ID = '9488
