@@ -27,7 +27,7 @@
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 h-screen flex flex-col font-sans antialiased overflow-hidden">
 
   <!-- TOP HEADER -->
-  <header class="shrink-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 lg:px-6 py-3 flex items-center justify-between z-20">
+  <header class="shrink-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 lg:px-8 py-3 flex items-center justify-between z-20">
     <div class="flex items-center space-x-3">
       <div class="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold shadow-sm">
         ✓
@@ -49,7 +49,12 @@
     </div>
 
     <!-- Right Controls -->
-    <div class="flex items-center space-x-2">
+    <div class="flex items-center space-x-3">
+      <div class="flex items-center space-x-1.5 text-xs text-slate-500 dark:text-slate-400">
+        <span id="sync-status">Ready</span>
+        <button onclick="refreshData()" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300" title="Refresh">🔄</button>
+      </div>
+
       <button onclick="toggleTheme()" class="p-2 rounded-xl text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 text-base" title="Toggle Theme">
         <span class="dark:hidden">🌙</span>
         <span class="hidden dark:inline">☀️</span>
@@ -62,7 +67,7 @@
   </header>
 
   <!-- BANNER -->
-  <div id="status-banner" class="shrink-0 bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-900/50 px-4 py-2 text-xs text-amber-800 dark:text-amber-300 flex items-center justify-between z-10">
+  <div id="status-banner" class="shrink-0 bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-900/50 px-4 lg:px-8 py-2 text-xs text-amber-800 dark:text-amber-300 flex items-center justify-between z-10">
     <div class="flex items-center space-x-2 truncate">
       <span id="banner-text">Viewing offline sample tasks. Connect your Google account to manage your live tasks.</span>
     </div>
@@ -71,43 +76,8 @@
     </button>
   </div>
 
-  <!-- MAIN BODY -->
+  <!-- MAIN BODY (Clean Full-Width Workspace) -->
   <div class="flex-1 flex overflow-hidden relative">
-    <!-- SIDEBAR -->
-    <aside class="w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col shrink-0">
-      <div class="p-4 border-b border-slate-100 dark:border-slate-800">
-        <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Quick Views</h2>
-      </div>
-
-      <div class="px-2 py-3 space-y-1">
-        <button onclick="setFilter('all-open')" data-filter="all-open" class="filter-btn active w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-colors bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
-          <span>📥 All Open Tasks</span>
-          <span id="count-all-open" class="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-800/50 font-semibold">0</span>
-        </button>
-        <button onclick="setFilter('today')" data-filter="today" class="filter-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-colors text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60">
-          <span>📅 Due Today</span>
-          <span id="count-today" class="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 font-semibold">0</span>
-        </button>
-        <button onclick="setFilter('overdue')" data-filter="overdue" class="filter-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-colors text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60">
-          <span>⚠️ Overdue</span>
-          <span id="count-overdue" class="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 font-semibold">0</span>
-        </button>
-      </div>
-
-      <div class="mt-4 px-4 flex items-center justify-between">
-        <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Lists</h2>
-        <button onclick="promptNewList()" class="p-1 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" title="New List">+</button>
-      </div>
-
-      <div id="lists-container" class="flex-1 overflow-y-auto px-2 py-2 space-y-1"></div>
-
-      <div class="p-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-400">
-        <span id="sync-status">Ready</span>
-        <button onclick="refreshData()" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300" title="Refresh">🔄</button>
-      </div>
-    </aside>
-
-    <!-- MAIN TASK CONTENT -->
     <main class="flex-1 flex flex-col min-w-0 bg-slate-50 dark:bg-slate-950 overflow-y-auto">
       <div class="max-w-4xl w-full mx-auto p-4 md:p-6 lg:p-8 flex-1 flex flex-col space-y-6">
         
@@ -126,7 +96,6 @@
               <option value="due-asc">Sort: Due Date (Earliest)</option>
               <option value="due-desc">Sort: Due Date (Latest)</option>
               <option value="title">Sort: Alphabetical</option>
-              <option value="list">Sort: By List</option>
             </select>
 
             <button onclick="openTaskModal()" class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition-all cursor-pointer">
@@ -135,26 +104,12 @@
           </div>
         </div>
 
-        <!-- Quick Add Bar -->
-        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-2 flex items-center">
-          <input 
-            type="text" 
-            id="quick-task-title" 
-            placeholder="Add task... Format: John Doe - 01/01/1970 - jdoe@domain.com [Press Enter]" 
-            onkeypress="if(event.key==='Enter') quickAddTask()"
-            class="flex-1 bg-transparent px-3 py-1.5 text-sm outline-none text-slate-800 dark:text-slate-100 placeholder-slate-400"
-          />
-          <button onclick="quickAddTask()" class="px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 text-xs font-semibold hover:bg-blue-100 transition-colors cursor-pointer">
-            Add
-          </button>
-        </div>
-
         <!-- Task List Area -->
         <div class="flex-1">
           <div id="empty-state" class="hidden py-16 flex flex-col items-center justify-center text-center">
             <div class="text-3xl mb-2">🎉</div>
             <h3 class="text-base font-semibold text-slate-800 dark:text-slate-200">No open tasks found</h3>
-            <p class="text-xs text-slate-500 dark:text-slate-400 max-w-xs mt-1">You're all caught up! Create a new task or switch to another view.</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 max-w-xs mt-1">You're all caught up! Create a new task or refresh.</p>
           </div>
 
           <div id="tasks-container" class="space-y-3 pb-24"></div>
@@ -199,6 +154,8 @@
 
       <form id="task-form" onsubmit="handleTaskFormSubmit(event)" class="mt-4 space-y-4">
         <input type="hidden" id="form-task-id" />
+        <input type="hidden" id="form-list-id" />
+        
         <div>
           <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
             Task Name * <span class="text-blue-600 dark:text-blue-400 font-normal">(Format: FullName - BirthDate - PrimaryEmail)</span>
@@ -206,15 +163,9 @@
           <input type="text" id="form-title" required placeholder="John Doe - 01/01/1970 - jdoe@domainname.com" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Target List</label>
-            <select id="form-list-id" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"></select>
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Due Date</label>
-            <input type="date" id="form-due-date" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
-          </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Due Date</label>
+          <input type="date" id="form-due-date" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
         <div>
@@ -247,7 +198,6 @@
 
     let accessToken = localStorage.getItem('gtasks_access_token') || null;
     let isLiveAccount = false;
-    let currentFilter = 'all-open';
     let searchQuery = '';
     let sortOption = 'due-asc';
 
@@ -256,8 +206,7 @@
     let selectedTaskIds = new Set();
 
     const DEMO_LISTS = [
-      { id: 'list-default', title: 'Team Outreach' },
-      { id: 'list-work', title: 'Engineering' }
+      { id: 'list-default', title: 'Team Outreach' }
     ];
 
     const DEMO_TASKS = [
@@ -418,12 +367,12 @@
       if (connected) {
         authBtn.className = "flex items-center space-x-2 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-sm transition-all cursor-pointer";
         authLabel.textContent = "Google Connected";
-        banner.className = "shrink-0 bg-emerald-50 dark:bg-emerald-950/40 border-b border-emerald-200 dark:border-emerald-900/50 px-4 py-2 text-xs text-emerald-800 dark:text-emerald-300 flex items-center justify-between z-10";
+        banner.className = "shrink-0 bg-emerald-50 dark:bg-emerald-950/40 border-b border-emerald-200 dark:border-emerald-900/50 px-4 lg:px-8 py-2 text-xs text-emerald-800 dark:text-emerald-300 flex items-center justify-between z-10";
         bannerText.textContent = "Live mode: Connected directly to your Google Tasks account.";
       } else {
         authBtn.className = "flex items-center space-x-2 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition-all cursor-pointer";
         authLabel.textContent = "Connect Google";
-        banner.className = "shrink-0 bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-900/50 px-4 py-2 text-xs text-amber-800 dark:text-amber-300 flex items-center justify-between z-10";
+        banner.className = "shrink-0 bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-900/50 px-4 lg:px-8 py-2 text-xs text-amber-800 dark:text-amber-300 flex items-center justify-between z-10";
         bannerText.textContent = "Viewing offline sample tasks. Connect your Google account to manage your live tasks.";
       }
     }
@@ -469,7 +418,6 @@
         selectedTaskIds.clear();
         updateActionBar();
         setSyncStatus('Synced');
-        renderLists();
         renderTasks();
       } catch (err) {
         console.error(err);
@@ -499,48 +447,7 @@
       selectedTaskIds.clear();
       updateActionBar();
       setSyncStatus('Demo Mode');
-      renderLists();
       renderTasks();
-    }
-
-    function renderLists() {
-      const container = document.getElementById('lists-container');
-      const formListSelect = document.getElementById('form-list-id');
-      container.innerHTML = '';
-      formListSelect.innerHTML = '';
-
-      taskLists.forEach(list => {
-        const count = allTasks.filter(t => t.listId === list.id && t.status !== 'completed').length;
-        const btn = document.createElement('button');
-        btn.className = `filter-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
-          currentFilter === list.id 
-            ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' 
-            : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60'
-        }`;
-        btn.dataset.filter = list.id;
-        btn.innerHTML = `
-          <span class="truncate">📋 ${escapeHtml(list.title)}</span>
-          <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 font-semibold">${count}</span>
-        `;
-        btn.onclick = () => setFilter(list.id);
-        container.appendChild(btn);
-
-        const opt = document.createElement('option');
-        opt.value = list.id;
-        opt.textContent = list.title;
-        formListSelect.appendChild(opt);
-      });
-
-      updateCounts();
-    }
-
-    function updateCounts() {
-      const openTasks = allTasks.filter(t => t.status !== 'completed');
-      const todayStr = new Date().toISOString().split('T')[0];
-
-      document.getElementById('count-all-open').textContent = openTasks.length;
-      document.getElementById('count-today').textContent = openTasks.filter(t => t.due && t.due.split('T')[0] === todayStr).length;
-      document.getElementById('count-overdue').textContent = openTasks.filter(t => t.due && t.due.split('T')[0] < todayStr).length;
     }
 
     function toggleTaskSelection(taskId, event) {
@@ -593,16 +500,7 @@
     }
 
     function getFilteredTasks() {
-      const todayStr = new Date().toISOString().split('T')[0];
       let filtered = allTasks.filter(t => t.status !== 'completed');
-
-      if (currentFilter === 'today') {
-        filtered = filtered.filter(t => t.due && t.due.split('T')[0] === todayStr);
-      } else if (currentFilter === 'overdue') {
-        filtered = filtered.filter(t => t.due && t.due.split('T')[0] < todayStr);
-      } else if (currentFilter !== 'all-open') {
-        filtered = filtered.filter(t => t.listId === currentFilter);
-      }
 
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
@@ -684,7 +582,6 @@
       actionBtn.innerHTML = `<span>Send DMs & Reschedule</span><span>→</span>`;
       setSyncStatus('Synced');
       renderTasks();
-      renderLists();
 
       alert(`✅ Finished! Dispatched outreach and moved ${selectedTasks.length} tasks to ${dateFormatted}.`);
     }
@@ -706,8 +603,6 @@
           return new Date(b.due) - new Date(a.due);
         } else if (sortOption === 'title') {
           return a.title.localeCompare(b.title);
-        } else if (sortOption === 'list') {
-          return (a.listId || '').localeCompare(b.listId || '');
         }
         return 0;
       });
@@ -737,12 +632,10 @@
           }
         }
 
-        // Only show an error badge if the title doesn't have a valid email
         const emailErrorBadge = !extractedEmail 
           ? `<span class="inline-flex items-center text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 px-2 py-0.5 rounded-md border border-rose-200/50 dark:border-rose-900/50">⚠️ Missing Email in Title</span>`
           : '';
 
-        // Render profile and calendar quick buttons if links exist in notes
         const profileBtn = profileUrl ? `
           <a href="${profileUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-xs font-semibold transition-colors border border-blue-200/60 dark:border-blue-800/50 shadow-xs" title="Open Striven Profile">
             <span>👤</span>
@@ -785,7 +678,6 @@
               <button class="p-1 rounded-lg text-slate-400 hover:text-blue-600 text-xs" title="Edit task">✏️</button>
             </div>
             
-            <!-- Quick Link Buttons for Striven Profile & Calendar -->
             ${(profileBtn || calendarBtn) ? `
               <div class="mt-2.5 flex items-center gap-2">
                 ${profileBtn}
@@ -793,7 +685,6 @@
               </div>
             ` : ''}
             
-            <!-- Metadata Row -->
             <div class="mt-2.5 flex flex-wrap items-center gap-2">
               ${emailErrorBadge}
               ${dueBadge}
@@ -816,8 +707,6 @@
 
         container.appendChild(taskCard);
       });
-
-      updateCounts();
     }
 
     async function completeTask(taskId, cardElement) {
@@ -849,59 +738,7 @@
           }
         }
         renderTasks();
-        renderLists();
       }, 300);
-    }
-
-    async function quickAddTask() {
-      const input = document.getElementById('quick-task-title');
-      const title = input.value.trim();
-      if (!title) return;
-
-      let targetListId = taskLists[0]?.id;
-      if (currentFilter !== 'all-open' && currentFilter !== 'today' && currentFilter !== 'overdue') {
-        targetListId = currentFilter;
-      }
-
-      const newTaskData = {
-        title: title,
-        notes: '',
-        status: 'needsAction',
-        due: currentFilter === 'today' ? new Date().toISOString() : null
-      };
-
-      input.value = '';
-      setSyncStatus('Adding...');
-
-      if (isLiveAccount) {
-        try {
-          const res = await apiRequest(`/lists/${targetListId}/tasks`, {
-            method: 'POST',
-            body: JSON.stringify(newTaskData)
-          });
-          allTasks.unshift({
-            id: res.id,
-            listId: targetListId,
-            title: res.title,
-            notes: res.notes || '',
-            due: res.due || null,
-            status: res.status
-          });
-          setSyncStatus('Synced');
-        } catch (err) {
-          alert('Could not add task to Google Tasks.');
-        }
-      } else {
-        allTasks.unshift({
-          id: 'demo-' + Date.now(),
-          listId: targetListId,
-          ...newTaskData
-        });
-        setSyncStatus('Demo Mode');
-      }
-
-      renderTasks();
-      renderLists();
     }
 
     function openTaskModal(taskId = null) {
@@ -928,12 +765,8 @@
       } else {
         modalTitle.textContent = 'Create New Task';
         document.getElementById('form-task-id').value = '';
+        document.getElementById('form-list-id').value = taskLists[0]?.id || 'list-default';
         document.getElementById('form-due-date').value = '';
-        
-        if (currentFilter !== 'all-open' && currentFilter !== 'today' && currentFilter !== 'overdue') {
-          document.getElementById('form-list-id').value = currentFilter;
-        }
-
         deleteBtn.classList.add('hidden');
       }
 
@@ -949,7 +782,7 @@
       const taskId = document.getElementById('form-task-id').value;
       const title = document.getElementById('form-title').value.trim();
       const notes = document.getElementById('form-notes').value.trim();
-      const listId = document.getElementById('form-list-id').value;
+      const listId = document.getElementById('form-list-id').value || taskLists[0]?.id || 'list-default';
       const dueDateVal = document.getElementById('form-due-date').value;
       const due = dueDateVal ? new Date(dueDateVal + 'T00:00:00Z').toISOString() : null;
 
@@ -1008,7 +841,6 @@
       }
 
       renderTasks();
-      renderLists();
     }
 
     async function deleteTask(taskId) {
@@ -1031,38 +863,6 @@
       }
 
       renderTasks();
-      renderLists();
-    }
-
-    function setFilter(filterType) {
-      currentFilter = filterType;
-      document.querySelectorAll('.filter-btn').forEach(btn => {
-        if (btn.dataset.filter === filterType) {
-          btn.className = 'filter-btn active w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-colors bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300';
-        } else {
-          btn.className = 'filter-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-colors text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60';
-        }
-      });
-
-      const titleEl = document.getElementById('current-view-title');
-      const descEl = document.getElementById('current-view-desc');
-      if (filterType === 'all-open') {
-        titleEl.textContent = 'All Open Tasks';
-        descEl.textContent = 'Select tasks to auto-DM via Chat and reschedule to the next business day';
-      } else if (filterType === 'today') {
-        titleEl.textContent = 'Due Today';
-        descEl.textContent = 'Tasks scheduled for completion today';
-      } else if (filterType === 'overdue') {
-        titleEl.textContent = 'Overdue Tasks';
-        descEl.textContent = 'Open tasks that missed their scheduled due date';
-      } else {
-        const list = taskLists.find(l => l.id === filterType);
-        titleEl.textContent = list ? list.title : 'Task List';
-        descEl.textContent = 'Viewing open tasks from this specific list';
-      }
-
-      updateActionBar();
-      renderTasks();
     }
 
     function setSyncStatus(msg) {
@@ -1080,26 +880,6 @@
         searchQuery = e.target.value;
         renderTasks();
       });
-    }
-
-    function promptNewList() {
-      const title = prompt('Enter new task list title:');
-      if (!title || !title.trim()) return;
-
-      if (isLiveAccount) {
-        setSyncStatus('Creating...');
-        apiRequest('/users/@me/lists', {
-          method: 'POST',
-          body: JSON.stringify({ title: title.trim() })
-        }).then(res => {
-          taskLists.push(res);
-          setSyncStatus('Synced');
-          renderLists();
-        }).catch(() => alert('Failed to create list on Google Tasks.'));
-      } else {
-        taskLists.push({ id: 'list-' + Date.now(), title: title.trim() });
-        renderLists();
-      }
     }
 
     function refreshData() {
