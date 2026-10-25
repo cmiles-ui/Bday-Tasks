@@ -84,8 +84,8 @@
       
       <!-- Selection & Stat Badges -->
       <div class="flex items-center space-x-2">
-        <button onclick="toggleSelectAll()" id="btn-select-all" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-all cursor-pointer">
-          Select All
+        <button onclick="toggleSelectDue()" id="btn-select-due" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-all cursor-pointer">
+          Select Due
         </button>
 
         <span class="text-xs text-slate-400 dark:text-slate-500">•</span>
@@ -484,21 +484,17 @@
       return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
     }
 
-    // Extracts only City, State, Country from standard full address formats
     function formatShortAddress(fullAddress) {
       if (!fullAddress) return '';
       const parts = fullAddress.split(',').map(p => p.trim()).filter(Boolean);
 
-      // Typical full format: [Street, City, State ZIP, Country]
       if (parts.length >= 4) {
         const city = parts[1];
-        // Strip zip code from state (e.g., "TX 75024" -> "TX")
         const stateZip = parts[2];
         const state = stateZip.replace(/\b\d{5}(-\d{4})?\b/, '').trim();
         const country = parts[3];
         return `${city}, ${state || stateZip}, ${country}`;
       } else if (parts.length === 3) {
-        // e.g., [City, State ZIP, Country] or [Street, City, State]
         const cityOrStreet = parts[0];
         const stateZip = parts[1];
         const state = stateZip.replace(/\b\d{5}(-\d{4})?\b/, '').trim();
@@ -599,12 +595,25 @@
       renderTasks();
     }
 
-    function toggleSelectAll() {
-      const visibleTasks = allTasks.filter(t => t.status !== 'completed');
-      const allSelected = visibleTasks.length > 0 && visibleTasks.every(t => selectedTaskIds.has(t.id));
+    // ========================================================
+    // SELECT DUE (Today or Earlier Only)
+    // ========================================================
+    function getDueEligibleTasks() {
+      const todayStr = new Date().toISOString().split('T')[0];
+      return allTasks.filter(t => t.status !== 'completed' && (!t.due || t.due.split('T')[0] <= todayStr));
+    }
 
-      if (allSelected) visibleTasks.forEach(t => selectedTaskIds.delete(t.id));
-      else visibleTasks.forEach(t => selectedTaskIds.add(t.id));
+    function toggleSelectDue() {
+      const eligibleTasks = getDueEligibleTasks();
+      if (eligibleTasks.length === 0) return;
+
+      const allEligibleSelected = eligibleTasks.every(t => selectedTaskIds.has(t.id));
+
+      if (allEligibleSelected) {
+        eligibleTasks.forEach(t => selectedTaskIds.delete(t.id));
+      } else {
+        eligibleTasks.forEach(t => selectedTaskIds.add(t.id));
+      }
 
       updateActionBar();
       renderTasks();
@@ -613,16 +622,18 @@
     function updateActionBar() {
       const bar = document.getElementById('chat-action-bar');
       const countEl = document.getElementById('selected-count');
-      const selectAllBtn = document.getElementById('btn-select-all');
+      const selectDueBtn = document.getElementById('btn-select-due');
       const count = selectedTaskIds.size;
       countEl.textContent = count;
 
       if (count > 0) bar.classList.remove('translate-y-32');
       else bar.classList.add('translate-y-32');
 
-      const visibleTasks = allTasks.filter(t => t.status !== 'completed');
-      const allSelected = visibleTasks.length > 0 && visibleTasks.every(t => selectedTaskIds.has(t.id));
-      selectAllBtn.textContent = allSelected ? 'Deselect All' : 'Select All';
+      const eligibleTasks = getDueEligibleTasks();
+      const allEligibleSelected = eligibleTasks.length > 0 && eligibleTasks.every(t => selectedTaskIds.has(t.id));
+      if (selectDueBtn) {
+        selectDueBtn.textContent = allEligibleSelected ? 'Deselect Due' : 'Select Due';
+      }
     }
 
     async function sendSingleDM(taskId, event) {
@@ -751,7 +762,7 @@
     }
 
     // ========================================================
-    // RENDER TASKS (CLEAN NAME LINK - SHORTENED MAPS BADGE)
+    // RENDER TASKS
     // ========================================================
     function renderTasks() {
       const container = document.getElementById('tasks-container');
@@ -834,7 +845,6 @@
              </div>`
           : '';
 
-        // Clean link on employee name without the arrow icon
         const nameElement = profileUrl
           ? `<a href="${profileUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="text-base font-extrabold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 leading-tight transition-colors inline-block text-left" title="Open Striven Profile">
                ${escapeHtml(fullName)}
@@ -869,7 +879,6 @@
              </span>` 
           : '';
 
-        // Displays City, State, Country but passes fullAddress to Google Maps
         const addressBadge = employeeAddress 
           ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(employeeAddress)}" 
                 target="_blank" 
