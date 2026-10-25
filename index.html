@@ -69,7 +69,7 @@
         </button>
 
         <!-- Google Connect -->
-        <button id="auth-btn" onclick="startGoogleAuth()" class="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-semibold shadow-sm shadow-blue-500/20 transition-all cursor-pointer">
+        <button id="auth-btn" onclick="handleAuthButtonClick()" class="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-semibold shadow-sm shadow-blue-500/20 transition-all cursor-pointer">
           <span id="auth-btn-label">Connect Google</span>
         </button>
       </div>
@@ -205,8 +205,11 @@
     const APPS_SCRIPT_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyAAWmJDaHMuian_enjc2CoGWqbTJTdocp_pSxoDxoT39FqZwZOysVZVjPuUnDajnfB_A/exec';
 
     let accessToken = localStorage.getItem('gtasks_access_token') || null;
+    let tokenExpiry = parseInt(localStorage.getItem('gtasks_token_expiry') || '0', 10);
     let isLiveAccount = false;
     let sortOption = 'due-asc';
+    let tokenClient = null;
+    let silentRefreshTimer = null;
 
     let taskLists = [];
     let allTasks = [];
@@ -236,11 +239,7 @@
     window.addEventListener('DOMContentLoaded', async () => {
       initTheme();
       await fetchStrivenDirectory();
-      if (accessToken) {
-        verifyAndFetchData();
-      } else {
-        loadDemoData();
-      }
+      initGoogleAuthEngine();
     });
 
     function initTheme() {
@@ -261,6 +260,148 @@
       }
     }
 
+    // ========================================================
+    // PERSISTENT AUTHENTICATION & SILENT AUTO-RENEWAL
+    // ========================================================
+    function initGoogleAuthEngine() {
+      const checkGsiReady = setInterval(() => {
+        if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
+          clearInterval(checkGsiReady);
+
+          tokenClient = google.accounts.oauth2.initTokenClient({
+            client_id: GOOGLE_CLIENT_ID,
+            scope: SCOPES,
+            callback: async (tokenResponse) => {
+              if (tokenResponse && tokenResponse.access_token) {
+                applyNewToken(tokenResponse.access_token, tokenResponse.expires_in || 3599);
+                isLiveAccount = true;
+                updateAuthStatusUI(true);
+                await fetchAllGoogleData();
+              } else {
+                handleAuthFailure();
+              }
+            },
+            error_callback: (err) => {
+              console.warn('OAuth callback notice:', err);
+              // If silent background renewal fails, fallback cleanly
+              if (!accessToken || Date.now() > tokenExpiry) {
+                handleAuthFailure();
+              }
+            }
+          });
+
+          // Check if previously logged in
+          const wasLoggedIn = localStorage.getItem('gtasks_logged_in') === 'true';
+
+          if (wasLoggedIn) {
+            const now = Date.now();
+            if (accessToken && now < tokenExpiry - 60000) {
+              // Token still valid
+              isLiveAccount = true;
+              updateAuthStatusUI(true);
+              scheduleBackgroundRenewal((tokenExpiry - now) - 120000);
+              fetchAllGoogleData().catch(() => requestSilentLogin());
+            } else {
+              // Token expired or missing, trigger silent auto-login
+              requestSilentLogin();
+            }
+          } else {
+            loadDemoData();
+          }
+        }
+      }, 100);
+    }
+
+    function applyNewToken(token, expiresInSeconds) {
+      accessToken = token;
+      tokenExpiry = Date.now() + (expiresInSeconds * 1000);
+      localStorage.setItem('gtasks_access_token', token);
+      localStorage.setItem('gtasks_token_expiry', tokenExpiry.toString());
+      localStorage.setItem('gtasks_logged_in', 'true');
+
+      // Schedule silent auto-refresh 5 minutes before expiration
+      const refreshDelay = Math.max((expiresInSeconds - 300) * 1000, 60000);
+      scheduleBackgroundRenewal(refreshDelay);
+    }
+
+    function scheduleBackgroundRenewal(delayMs) {
+      if (silentRefreshTimer) clearTimeout(silentRefreshTimer);
+      silentRefreshTimer = setTimeout(() => {
+        requestSilentLogin();
+      }, delayMs);
+    }
+
+    // Silent background token request without consent prompt
+    function requestSilentLogin() {
+      if (!tokenClient) return;
+      try {
+        setSyncStatus('Reconnecting...');
+        tokenClient.requestAccessToken({ prompt: '' });
+      } catch (err) {
+        console.warn('Silent login request error:', err);
+        handleAuthFailure();
+      }
+    }
+
+    function handleAuthButtonClick() {
+      if (isLiveAccount) {
+        if (confirm('Disconnect Google account and switch to demo mode?')) {
+          logoutGoogle();
+        }
+        return;
+      }
+
+      // Interactive explicit sign-in
+      if (!tokenClient) {
+        alert('Google authentication service is still initializing. Please wait a moment.');
+        return;
+      }
+      document.getElementById('auth-btn-label').textContent = 'Connecting...';
+      tokenClient.requestAccessToken({ prompt: 'consent' });
+    }
+
+    function logoutGoogle() {
+      localStorage.removeItem('gtasks_access_token');
+      localStorage.removeItem('gtasks_token_expiry');
+      localStorage.removeItem('gtasks_logged_in');
+      accessToken = null;
+      tokenExpiry = 0;
+      isLiveAccount = false;
+      if (silentRefreshTimer) clearTimeout(silentRefreshTimer);
+      updateAuthStatusUI(false);
+      loadDemoData();
+    }
+
+    function handleAuthFailure() {
+      localStorage.removeItem('gtasks_access_token');
+      localStorage.removeItem('gtasks_token_expiry');
+      accessToken = null;
+      isLiveAccount = false;
+      updateAuthStatusUI(false);
+      loadDemoData();
+    }
+
+    function updateAuthStatusUI(connected) {
+      const authBtn = document.getElementById('auth-btn');
+      const authLabel = document.getElementById('auth-btn-label');
+      const pill = document.getElementById('connection-pill');
+
+      if (connected) {
+        authBtn.className = "px-3.5 py-1.5 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all cursor-pointer";
+        authLabel.textContent = "Disconnect";
+        pill.className = "text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/40";
+        pill.textContent = "Google Connected";
+      } else {
+        authBtn.className = "px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm shadow-blue-500/20 transition-all cursor-pointer";
+        authLabel.textContent = "Connect Google";
+        pill.className = "text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900/40";
+        pill.textContent = "Demo Mode";
+      }
+    }
+
+    // ========================================================
+    // STRIVEN DIRECTORY
+    // ========================================================
     async function fetchStrivenDirectory() {
       try {
         const res = await fetch(APPS_SCRIPT_WEBAPP_URL);
@@ -370,67 +511,6 @@
       return `${firstName}, do you happen to have a couple minutes now? If not, just DM me when you are free.`;
     }
 
-    function startGoogleAuth() {
-      if (isLiveAccount) {
-        if (confirm('Disconnect Google account and switch to demo mode?')) {
-          localStorage.removeItem('gtasks_access_token');
-          accessToken = null;
-          isLiveAccount = false;
-          updateAuthStatusUI(false);
-          loadDemoData();
-        }
-        return;
-      }
-
-      if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
-        alert('Google Sign-in service is still loading. Please check your connection and try again.');
-        return;
-      }
-
-      document.getElementById('auth-btn-label').textContent = 'Connecting...';
-
-      const client = google.accounts.oauth2.initTokenClient({
-        client_id: GOOGLE_CLIENT_ID,
-        scope: SCOPES,
-        callback: async (tokenResponse) => {
-          if (tokenResponse && tokenResponse.access_token) {
-            accessToken = tokenResponse.access_token;
-            localStorage.setItem('gtasks_access_token', accessToken);
-            isLiveAccount = true;
-            updateAuthStatusUI(true);
-            await fetchAllGoogleData();
-          } else {
-            document.getElementById('auth-btn-label').textContent = 'Connect Google';
-            alert('Sign in was canceled or failed.');
-          }
-        },
-        error_callback: (err) => {
-          document.getElementById('auth-btn-label').textContent = 'Connect Google';
-          alert('OAuth Error: ' + (err.message || 'Permission denied'));
-        }
-      });
-
-      client.requestAccessToken({ prompt: 'consent' });
-    }
-
-    function updateAuthStatusUI(connected) {
-      const authBtn = document.getElementById('auth-btn');
-      const authLabel = document.getElementById('auth-btn-label');
-      const pill = document.getElementById('connection-pill');
-
-      if (connected) {
-        authBtn.className = "px-3.5 py-1.5 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all cursor-pointer";
-        authLabel.textContent = "Disconnect";
-        pill.className = "text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/40";
-        pill.textContent = "Google Connected";
-      } else {
-        authBtn.className = "px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm shadow-blue-500/20 transition-all cursor-pointer";
-        authLabel.textContent = "Connect Google";
-        pill.className = "text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900/40";
-        pill.textContent = "Demo Mode";
-      }
-    }
-
     async function apiRequest(endpoint, options = {}) {
       if (!accessToken) throw new Error('No token');
       const res = await fetch(`https://tasks.googleapis.com/tasks/v1${endpoint}`, {
@@ -441,7 +521,10 @@
           ...(options.headers || {})
         }
       });
-      if (res.status === 401) throw new Error('Unauthorized');
+      if (res.status === 401) {
+        requestSilentLogin();
+        throw new Error('Unauthorized');
+      }
       if (res.status === 204) return null;
       return await res.json();
     }
@@ -477,21 +560,6 @@
         console.error(err);
         setSyncStatus('Sync Failed');
         throw err;
-      }
-    }
-
-    async function verifyAndFetchData() {
-      setSyncStatus('Connecting...');
-      try {
-        await fetchAllGoogleData();
-        isLiveAccount = true;
-        updateAuthStatusUI(true);
-      } catch (err) {
-        localStorage.removeItem('gtasks_access_token');
-        accessToken = null;
-        isLiveAccount = false;
-        updateAuthStatusUI(false);
-        loadDemoData();
       }
     }
 
@@ -669,9 +737,6 @@
       alert(`✅ Finished! Outreach sent and moved ${selectedTasks.length} tasks to ${dateFormatted}.`);
     }
 
-    // ========================================================
-    // RENDER TASKS (LEFT-ALIGNED & NO PENCIL BUTTON)
-    // ========================================================
     function renderTasks() {
       const container = document.getElementById('tasks-container');
       const emptyState = document.getElementById('empty-state');
