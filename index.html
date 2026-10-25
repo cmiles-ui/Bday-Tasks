@@ -484,6 +484,30 @@
       return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
     }
 
+    // Extracts only City, State, Country from standard full address formats
+    function formatShortAddress(fullAddress) {
+      if (!fullAddress) return '';
+      const parts = fullAddress.split(',').map(p => p.trim()).filter(Boolean);
+
+      // Typical full format: [Street, City, State ZIP, Country]
+      if (parts.length >= 4) {
+        const city = parts[1];
+        // Strip zip code from state (e.g., "TX 75024" -> "TX")
+        const stateZip = parts[2];
+        const state = stateZip.replace(/\b\d{5}(-\d{4})?\b/, '').trim();
+        const country = parts[3];
+        return `${city}, ${state || stateZip}, ${country}`;
+      } else if (parts.length === 3) {
+        // e.g., [City, State ZIP, Country] or [Street, City, State]
+        const cityOrStreet = parts[0];
+        const stateZip = parts[1];
+        const state = stateZip.replace(/\b\d{5}(-\d{4})?\b/, '').trim();
+        const country = parts[2];
+        return `${parts[0]}, ${state || stateZip}, ${country}`;
+      }
+      return fullAddress;
+    }
+
     function getNextBusinessDateISO() {
       const date = new Date();
       const day = date.getDay();
@@ -727,7 +751,7 @@
     }
 
     // ========================================================
-    // RENDER TASKS (CLEAN NAME LINK - NO ARROW)
+    // RENDER TASKS (CLEAN NAME LINK - SHORTENED MAPS BADGE)
     // ========================================================
     function renderTasks() {
       const container = document.getElementById('tasks-container');
@@ -774,6 +798,7 @@
         const hireDate = formatDateFriendly(strivenData.hireDate || strivenData.originalStartDate);
         const managerName = strivenData.managerName || '';
         const employeeAddress = strivenData.employeeAddress || '';
+        const shortAddress = formatShortAddress(employeeAddress);
 
         // Due date badge
         let dueBadge = '';
@@ -844,15 +869,16 @@
              </span>` 
           : '';
 
+        // Displays City, State, Country but passes fullAddress to Google Maps
         const addressBadge = employeeAddress 
           ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(employeeAddress)}" 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 onclick="event.stopPropagation()" 
                 class="inline-flex items-center text-xs font-medium text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 bg-slate-50 hover:bg-blue-50/70 dark:bg-slate-800/40 dark:hover:bg-slate-800 px-2.5 py-1 rounded-xl border border-slate-200/70 dark:border-slate-700/70 transition-colors group/addr" 
-                title="Open in Google Maps: ${escapeHtml(employeeAddress)}">
+                title="Full Address: ${escapeHtml(employeeAddress)}">
                <span class="mr-1">📍</span>
-               <span class="group-hover/addr:underline">${escapeHtml(employeeAddress)}</span>
+               <span class="group-hover/addr:underline">${escapeHtml(shortAddress)}</span>
                <span class="ml-1 text-[10px] text-slate-400 group-hover/addr:text-blue-500">↗</span>
              </a>` 
           : '';
