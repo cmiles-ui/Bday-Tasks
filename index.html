@@ -98,8 +98,8 @@
         <span class="text-xs text-slate-400 dark:text-slate-500">•</span>
 
         <div class="flex items-center space-x-1.5 text-xs text-slate-600 dark:text-slate-400 font-medium">
-          <span>Due Today:</span>
-          <span id="stat-today" class="font-bold text-emerald-600 dark:text-emerald-400">0</span>
+          <span>Due:</span>
+          <span id="stat-due" class="font-bold text-emerald-600 dark:text-emerald-400">0</span>
         </div>
       </div>
 
@@ -762,7 +762,7 @@
     }
 
     // ========================================================
-    // RENDER TASKS
+    // RENDER TASKS (ACCURATE "DUE" COUNT)
     // ========================================================
     function renderTasks() {
       const container = document.getElementById('tasks-container');
@@ -772,8 +772,9 @@
       const todayStr = new Date().toISOString().split('T')[0];
       let openTasks = allTasks.filter(t => t.status !== 'completed');
 
+      // Update counters: "Due" includes today and overdue/past tasks
       document.getElementById('stat-total').textContent = openTasks.length;
-      document.getElementById('stat-today').textContent = openTasks.filter(t => t.due && t.due.split('T')[0] === todayStr).length;
+      document.getElementById('stat-due').textContent = getDueEligibleTasks().length;
 
       openTasks.sort((a, b) => {
         if (sortOption === 'due-asc') {
