@@ -455,9 +455,6 @@
       }
     }
 
-    // ========================================================
-    // PARSE TASK TITLE (THIS YEAR'S BIRTHDAY DAY-OF-WEEK)
-    // ========================================================
     function parseTaskTitle(title) {
       if (!title) return { fullName: '(Untitled)', firstName: 'there', birthDateFormatted: '', dayOfWeek: '', email: '' };
 
@@ -495,7 +492,6 @@
             const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
             const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-            // Day of the week this year's birthday falls on
             dayOfWeek = days[thisYearsBdayDate.getDay()];
             birthDateFormatted = `${months[m]} ${d}${dateParts.length >= 3 ? `, ${y}` : ''}`;
           }
@@ -801,7 +797,6 @@
       alert(`✅ Finished! Outreach sent and moved ${selectedTasks.length} tasks to ${dateFormatted}.`);
     }
 
-    // Quick Calendar Popover Logic
     function openCalendarPopover(taskId, event) {
       if (event) event.stopPropagation();
       const task = allTasks.find(t => t.id === taskId);
@@ -1010,11 +1005,12 @@
           </a>
         ` : '';
 
+        // Unified baseline alignment with consistent text-sm sizing
         const bdayDisplay = birthDateFormatted 
-          ? `<div class="mt-1 flex items-center text-xs sm:text-sm font-semibold text-indigo-600 dark:text-indigo-400 text-left">
-               <span class="mr-1">🎂</span>
-               <span>${escapeHtml(birthDateFormatted)}</span>
-               ${dayOfWeek ? `<span class="ml-1 text-xs font-bold text-indigo-500/80 dark:text-indigo-300/80">(${dayOfWeek})</span>` : ''}
+          ? `<div class="mt-1 flex items-baseline text-sm font-semibold text-indigo-600 dark:text-indigo-400 text-left">
+               <span class="mr-1.5 self-center text-base leading-none">🎂</span>
+               <span class="leading-none">${escapeHtml(birthDateFormatted)}</span>
+               ${dayOfWeek ? `<span class="ml-1.5 text-sm font-bold text-indigo-500/80 dark:text-indigo-300/80 leading-none">(${dayOfWeek})</span>` : ''}
              </div>`
           : '';
 
