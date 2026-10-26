@@ -253,7 +253,8 @@
     let strivenEmployeeDirectory = {};
 
     let calCurrentTaskId = null;
-    let calViewDate = new Date();
+    let calViewYear = new Date().getFullYear();
+    let calViewMonth = new Date().getMonth(); // 0-indexed
 
     const DEMO_LISTS = [{ id: 'list-default', title: 'Team Outreach' }];
     const DEMO_TASKS = [
@@ -262,7 +263,7 @@
         listId: 'list-default',
         title: 'Sierra Miles - 07/08/2001 - sierra@sierramilesmusic.com',
         notes: "https://striven.milesit.com/employees/sierra\nhttps://calendar.google.com",
-        due: new Date().toISOString(),
+        due: getTodayDateString() + 'T00:00:00.000Z',
         status: 'needsAction'
       },
       {
@@ -270,7 +271,7 @@
         listId: 'list-default',
         title: 'David Smith - 11/20/1988 - david@company.com',
         notes: "https://striven.milesit.com/employees/david\nhttps://calendar.google.com",
-        due: new Date().toISOString(),
+        due: getTodayDateString() + 'T00:00:00.000Z',
         status: 'needsAction'
       }
     ];
@@ -300,30 +301,60 @@
     }
 
     // ========================================================
-    // DATE HELPER UTILITIES (TIME ZONE SAFE)
+    // BULLETPROOF DATE UTILITIES (NO TIMEZONE DRIFT)
     // ========================================================
-    function getLocalDateString(dateObj = new Date()) {
-      if (!dateObj || isNaN(dateObj.getTime())) return '';
-      const year = dateObj.getFullYear();
-      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-      const day = String(dateObj.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
+
+    // Extracts calendar "YYYY-MM-DD" from task.due without running through new Date()
+    function getTaskDueDateString(dueVal) {
+      if (!dueVal || typeof dueVal !== 'string') return '';
+      return dueVal.substring(0, 10); // Exactly "YYYY-MM-DD"
     }
 
-    function parseTaskDueToLocalDateString(dueISO) {
-      if (!dueISO) return '';
-      const d = new Date(dueISO);
-      if (isNaN(d.getTime())) return '';
-      return getLocalDateString(d);
+    // Today's local calendar date as "YYYY-MM-DD"
+    function getTodayDateString() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
     }
 
-    function localDateStringToSafeISO(dateStr) {
+    // Formats a "YYYY-MM-DD" string into friendly text (e.g. "Oct 24") purely by parts
+    function formatDueDateDisplay(dateStr) {
+      if (!dateStr || dateStr.length < 10) return '';
+      const parts = dateStr.substring(0, 10).split('-');
+      const y = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10) - 1;
+      const d = parseInt(parts[2], 10);
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      return `${monthNames[m]} ${d}`;
+    }
+
+    // Generates the strict Google Tasks RFC 3339 timestamp at UTC midnight
+    function toGoogleTasksDueTimestamp(dateStr) {
       if (!dateStr) return null;
-      const [year, month, day] = dateStr.split('-').map(Number);
-      const localDate = new Date(year, month - 1, day, 12, 0, 0, 0);
-      return localDate.toISOString();
+      const pureDate = dateStr.substring(0, 10);
+      return `${pureDate}T00:00:00.000Z`;
     }
 
+    // Calculates next business day in local calendar date "YYYY-MM-DD"
+    function getNextBusinessDateString() {
+      const date = new Date();
+      const day = date.getDay(); // 0 is Sun, 5 is Fri, 6 is Sat
+
+      if (day === 5) date.setDate(date.getDate() + 3);      // Fri -> Mon
+      else if (day === 6) date.setDate(date.getDate() + 2); // Sat -> Mon
+      else date.setDate(date.getDate() + 1);                 // Sun-Thu -> Next day
+
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    // ========================================================
+    // AUTHENTICATION & DIRECTORY
+    // ========================================================
     function initGoogleAuthEngine() {
       const checkGsiReady = setInterval(() => {
         if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
@@ -559,25 +590,12 @@
         const country = parts[3];
         return `${city}, ${state || stateZip}, ${country}`;
       } else if (parts.length === 3) {
-        const cityOrStreet = parts[0];
         const stateZip = parts[1];
         const state = stateZip.replace(/\b\d{5}(-\d{4})?\b/, '').trim();
         const country = parts[2];
         return `${parts[0]}, ${state || stateZip}, ${country}`;
       }
       return fullAddress;
-    }
-
-    function getNextBusinessDateISO() {
-      const date = new Date();
-      const day = date.getDay();
-
-      if (day === 5) date.setDate(date.getDate() + 3);
-      else if (day === 6) date.setDate(date.getDate() + 2);
-      else date.setDate(date.getDate() + 1);
-
-      date.setHours(12, 0, 0, 0); // Local noon avoids timezone drift
-      return date.toISOString();
     }
 
     function generateChatMessage(firstName) {
@@ -660,11 +678,11 @@
     }
 
     function getDueEligibleTasks() {
-      const todayStr = getLocalDateString(new Date());
+      const todayStr = getTodayDateString();
       return allTasks.filter(t => {
         if (t.status === 'completed') return false;
-        if (!t.due) return true;
-        const taskDueStr = parseTaskDueToLocalDateString(t.due);
+        if (!t.due) return true; // Tasks without due date count as due
+        const taskDueStr = getTaskDueDateString(t.due);
         return taskDueStr <= todayStr;
       });
     }
@@ -714,14 +732,11 @@
         return;
       }
 
-      const nextBusinessDateISO = getNextBusinessDateISO();
-      const dateFormatted = new Date(nextBusinessDateISO).toLocaleDateString(undefined, {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric'
-      });
+      const nextBusinessDateStr = getNextBusinessDateString();
+      const nextBusinessTimestamp = toGoogleTasksDueTimestamp(nextBusinessDateStr);
+      const friendlyDate = formatDueDateDisplay(nextBusinessDateStr);
 
-      const confirmed = confirm(`Send Google Chat DM to ${fullName} and reschedule task to ${dateFormatted}?`);
+      const confirmed = confirm(`Send Google Chat DM to ${fullName} and reschedule task to ${friendlyDate}?`);
       if (!confirmed) return;
 
       setSyncStatus(`Sending to ${firstName}...`);
@@ -742,12 +757,12 @@
         console.warn('Apps script notice:', err);
       }
 
-      task.due = nextBusinessDateISO;
+      task.due = nextBusinessTimestamp;
       if (isLiveAccount) {
         try {
           await apiRequest(`/lists/${task.listId}/tasks/${task.id}`, {
             method: 'PATCH',
-            body: JSON.stringify({ due: nextBusinessDateISO })
+            body: JSON.stringify({ due: nextBusinessTimestamp })
           });
         } catch (err) {
           console.error(`Failed to reschedule task ${task.id}:`, err);
@@ -764,14 +779,11 @@
       const selectedTasks = allTasks.filter(t => selectedTaskIds.has(t.id));
       if (selectedTasks.length === 0) return;
 
-      const nextBusinessDateISO = getNextBusinessDateISO();
-      const dateFormatted = new Date(nextBusinessDateISO).toLocaleDateString(undefined, {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric'
-      });
+      const nextBusinessDateStr = getNextBusinessDateString();
+      const nextBusinessTimestamp = toGoogleTasksDueTimestamp(nextBusinessDateStr);
+      const friendlyDate = formatDueDateDisplay(nextBusinessDateStr);
 
-      const confirmed = confirm(`Send personalized Google Chat DMs to ${selectedTasks.length} people and roll their follow-ups to ${dateFormatted}?`);
+      const confirmed = confirm(`Send personalized Google Chat DMs to ${selectedTasks.length} people and roll their follow-ups to ${friendlyDate}?`);
       if (!confirmed) return;
 
       const actionBtn = document.getElementById('btn-dispatch-dms');
@@ -804,12 +816,12 @@
       }
 
       for (const task of selectedTasks) {
-        task.due = nextBusinessDateISO;
+        task.due = nextBusinessTimestamp;
         if (isLiveAccount) {
           try {
             await apiRequest(`/lists/${task.listId}/tasks/${task.id}`, {
               method: 'PATCH',
-              body: JSON.stringify({ due: nextBusinessDateISO })
+              body: JSON.stringify({ due: nextBusinessTimestamp })
             });
           } catch (err) {
             console.error(`Failed to reschedule task ${task.id}:`, err);
@@ -824,11 +836,11 @@
       setSyncStatus('Synced');
       renderTasks();
 
-      alert(`✅ Finished! Outreach sent and moved ${selectedTasks.length} tasks to ${dateFormatted}.`);
+      alert(`✅ Finished! Outreach sent and moved ${selectedTasks.length} tasks to ${friendlyDate}.`);
     }
 
     // ========================================================
-    // CALENDAR POPOVER LOGIC (LOCAL TIME ZONE ACCURATE)
+    // CALENDAR POPOVER LOGIC (STRICT CALENDAR DATES)
     // ========================================================
     function openCalendarPopover(taskId, event) {
       if (event) event.stopPropagation();
@@ -838,10 +850,14 @@
       calCurrentTaskId = taskId;
 
       if (task.due) {
-        const d = new Date(task.due);
-        calViewDate = !isNaN(d.getTime()) ? new Date(d.getFullYear(), d.getMonth(), 1) : new Date();
+        const dateStr = getTaskDueDateString(task.due);
+        const parts = dateStr.split('-');
+        calViewYear = parseInt(parts[0], 10);
+        calViewMonth = parseInt(parts[1], 10) - 1;
       } else {
-        calViewDate = new Date();
+        const now = new Date();
+        calViewYear = now.getFullYear();
+        calViewMonth = now.getMonth();
       }
 
       renderCalendarGrid();
@@ -857,23 +873,27 @@
     }
 
     function navigateCalMonth(step) {
-      calViewDate.setMonth(calViewDate.getMonth() + step);
+      calViewMonth += step;
+      if (calViewMonth > 11) {
+        calViewMonth = 0;
+        calViewYear++;
+      } else if (calViewMonth < 0) {
+        calViewMonth = 11;
+        calViewYear--;
+      }
       renderCalendarGrid();
     }
 
     function renderCalendarGrid() {
       const task = allTasks.find(t => t.id === calCurrentTaskId);
-      const currentDueStr = task && task.due ? parseTaskDueToLocalDateString(task.due) : '';
-      const todayStr = getLocalDateString(new Date());
-
-      const year = calViewDate.getFullYear();
-      const month = calViewDate.getMonth();
+      const currentDueStr = task && task.due ? getTaskDueDateString(task.due) : '';
+      const todayStr = getTodayDateString();
 
       const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-      document.getElementById('cal-month-year').textContent = `${monthNames[month]} ${year}`;
+      document.getElementById('cal-month-year').textContent = `${monthNames[calViewMonth]} ${calViewYear}`;
 
-      const firstDayIndex = new Date(year, month, 1).getDay();
-      const totalDays = new Date(year, month + 1, 0).getDate();
+      const firstDayIndex = new Date(calViewYear, calViewMonth, 1).getDay();
+      const totalDays = new Date(calViewYear, calViewMonth + 1, 0).getDate();
 
       const grid = document.getElementById('cal-days-grid');
       grid.innerHTML = '';
@@ -885,12 +905,12 @@
       }
 
       for (let day = 1; day <= totalDays; day++) {
-        const monthStr = String(month + 1).padStart(2, '0');
-        const dayStr = String(day).padStart(2, '0');
-        const thisDateLocalStr = `${year}-${monthStr}-${dayStr}`;
+        const mStr = String(calViewMonth + 1).padStart(2, '0');
+        const dStr = String(day).padStart(2, '0');
+        const thisDateStr = `${calViewYear}-${mStr}-${dStr}`;
 
-        const isCurrentDue = thisDateLocalStr === currentDueStr;
-        const isToday = thisDateLocalStr === todayStr;
+        const isCurrentDue = thisDateStr === currentDueStr;
+        const isToday = thisDateStr === todayStr;
 
         const dayBtn = document.createElement('button');
         dayBtn.type = 'button';
@@ -902,27 +922,27 @@
               : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
         }`;
 
-        dayBtn.title = isCurrentDue ? "Current Due Date (Double-click any day to change)" : "Double-click to set as Due Date";
+        dayBtn.title = isCurrentDue ? "Current Due Date" : "Double-click to set as Due Date";
         dayBtn.innerHTML = `
           <span>${day}</span>
           ${isCurrentDue ? '<span class="w-1 h-1 rounded-full bg-white mt-0.5"></span>' : ''}
         `;
 
         dayBtn.ondblclick = () => {
-          updateTaskDueDate(thisDateLocalStr);
+          updateTaskDueDate(thisDateStr);
         };
 
         grid.appendChild(dayBtn);
       }
     }
 
-    async function updateTaskDueDate(localDateStr) {
+    async function updateTaskDueDate(dateStr) {
       if (!calCurrentTaskId) return;
       const task = allTasks.find(t => t.id === calCurrentTaskId);
       if (!task) return;
 
-      const safeDueISO = localDateStringToSafeISO(localDateStr);
-      task.due = safeDueISO;
+      const newDueTimestamp = toGoogleTasksDueTimestamp(dateStr);
+      task.due = newDueTimestamp;
 
       closeCalendarPopover();
       setSyncStatus('Saving date...');
@@ -931,7 +951,7 @@
         try {
           await apiRequest(`/lists/${task.listId}/tasks/${task.id}`, {
             method: 'PATCH',
-            body: JSON.stringify({ due: safeDueISO })
+            body: JSON.stringify({ due: newDueTimestamp })
           });
           setSyncStatus('Synced');
         } catch (err) {
@@ -969,12 +989,15 @@
       renderTasks();
     }
 
+    // ========================================================
+    // RENDER TASKS
+    // ========================================================
     function renderTasks() {
       const container = document.getElementById('tasks-container');
       const emptyState = document.getElementById('empty-state');
       container.innerHTML = '';
 
-      const todayStr = getLocalDateString(new Date());
+      const todayStr = getTodayDateString();
       let openTasks = allTasks.filter(t => t.status !== 'completed');
 
       document.getElementById('stat-total').textContent = openTasks.length;
@@ -982,11 +1005,15 @@
 
       openTasks.sort((a, b) => {
         if (sortOption === 'due-asc') {
-          if (!a.due) return 1; if (!b.due) return -1;
-          return new Date(a.due) - new Date(b.due);
+          const dateA = getTaskDueDateString(a.due);
+          const dateB = getTaskDueDateString(b.due);
+          if (!dateA) return 1; if (!dateB) return -1;
+          return dateA.localeCompare(dateB);
         } else if (sortOption === 'due-desc') {
-          if (!a.due) return 1; if (!b.due) return -1;
-          return new Date(b.due) - new Date(a.due);
+          const dateA = getTaskDueDateString(a.due);
+          const dateB = getTaskDueDateString(b.due);
+          if (!dateA) return 1; if (!dateB) return -1;
+          return dateB.localeCompare(dateA);
         } else if (sortOption === 'name') {
           const nameA = parseTaskTitle(a.title).fullName;
           const nameB = parseTaskTitle(b.title).fullName;
@@ -1018,15 +1045,12 @@
 
         let dueBadge = '';
         if (task.due) {
-          const taskDueDateLocalStr = parseTaskDueToLocalDateString(task.due);
-          const dateObj = new Date(task.due);
-          const dateFormatted = !isNaN(dateObj.getTime())
-            ? dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-            : taskDueDateLocalStr;
+          const taskDueDateStr = getTaskDueDateString(task.due);
+          const dateFormatted = formatDueDateDisplay(taskDueDateStr);
 
-          if (taskDueDateLocalStr < todayStr) {
+          if (taskDueDateStr < todayStr) {
             dueBadge = `<button onclick="openCalendarPopover('${task.id}', event)" class="inline-flex items-center text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/50 dark:hover:bg-rose-950/80 px-2.5 py-1 rounded-xl transition-colors cursor-pointer border border-rose-200/60 dark:border-rose-900/40" title="Overdue: Click to view/change due date">⚠️ Overdue: ${dateFormatted}</button>`;
-          } else if (taskDueDateLocalStr === todayStr) {
+          } else if (taskDueDateStr === todayStr) {
             dueBadge = `<button onclick="openCalendarPopover('${task.id}', event)" class="inline-flex items-center text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/50 dark:hover:bg-emerald-950/80 px-2.5 py-1 rounded-xl transition-colors cursor-pointer border border-emerald-200/60 dark:border-emerald-900/40" title="Due Today: Click to view/change due date">⏱️ Due Today</button>`;
           } else {
             dueBadge = `<button onclick="openCalendarPopover('${task.id}', event)" class="inline-flex items-center text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 px-2.5 py-1 rounded-xl transition-colors cursor-pointer" title="Click to view/change due date">📅 ${dateFormatted}</button>`;
@@ -1220,7 +1244,7 @@
         document.getElementById('form-title').value = task.title;
         document.getElementById('form-notes').value = task.notes || '';
         document.getElementById('form-list-id').value = task.listId;
-        document.getElementById('form-due-date').value = parseTaskDueToLocalDateString(task.due);
+        document.getElementById('form-due-date').value = getTaskDueDateString(task.due);
 
         deleteBtn.classList.remove('hidden');
         deleteBtn.onclick = () => deleteTask(task.id);
@@ -1245,8 +1269,8 @@
       const title = document.getElementById('form-title').value.trim();
       const notes = document.getElementById('form-notes').value.trim();
       const listId = document.getElementById('form-list-id').value || taskLists[0]?.id || 'list-default';
-      const dueDateVal = document.getElementById('form-due-date').value;
-      const due = dueDateVal ? localDateStringToSafeISO(dueDateVal) : null;
+      const dueDateVal = document.getElementById('form-due-date').value; // Exactly "YYYY-MM-DD"
+      const due = dueDateVal ? toGoogleTasksDueTimestamp(dueDateVal) : null;
 
       if (!title) return;
       closeTaskModal();
