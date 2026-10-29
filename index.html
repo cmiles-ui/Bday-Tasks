@@ -432,11 +432,39 @@
       };
     }
 
+    // Full 4-digit year preservation for Striven start dates
     function formatDateFriendly(dateStr) {
       if (!dateStr) return '';
+      
+      // Matches ISO format "YYYY-MM-DD"
+      if (typeof dateStr === 'string' && /^\d{4}[-/]\d{1,2}[-/]\d{1,2}/.test(dateStr.trim())) {
+        const clean = dateStr.trim().substring(0, 10);
+        const parts = clean.split(/[-/]/);
+        const y = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10) - 1;
+        const d = parseInt(parts[2], 10);
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        if (!isNaN(y) && !isNaN(m) && !isNaN(d) && monthNames[m]) {
+          return `${monthNames[m]} ${d}, ${y}`;
+        }
+      }
+
+      // Matches US format "MM/DD/YYYY"
+      if (typeof dateStr === 'string' && /^\d{1,2}[-/]\d{1,2}[-/]\d{4}/.test(dateStr.trim())) {
+        const parts = dateStr.trim().split(/[-/]/);
+        const m = parseInt(parts[0], 10) - 1;
+        const d = parseInt(parts[1], 10);
+        const y = parseInt(parts[2], 10);
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        if (!isNaN(y) && !isNaN(m) && !isNaN(d) && monthNames[m]) {
+          return `${monthNames[m]} ${d}, ${y}`;
+        }
+      }
+
+      // Fallback
       const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return dateStr;
-      return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      if (isNaN(d.getTime())) return String(dateStr);
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
     }
 
     function formatShortAddress(fullAddress) {
