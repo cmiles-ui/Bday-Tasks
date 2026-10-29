@@ -9,7 +9,6 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎂</text></svg>">
 
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -47,14 +46,14 @@
             🎂
           </div>
           <h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Bday Follow-Ups</h1>
-          <span id="connection-pill" class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900/40">
-            Demo Mode
+          <span class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/40">
+            Always Connected
           </span>
         </div>
         <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Send personalized Google Chat outreach & roll tasks to the next business day</p>
       </div>
 
-      <!-- Action & Auth Buttons -->
+      <!-- Action Buttons -->
       <div class="flex items-center space-x-2 self-start sm:self-center">
         <!-- Quick Refresh -->
         <button onclick="refreshData()" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-600 dark:text-slate-300 text-xs font-semibold shadow-xs transition-colors cursor-pointer" title="Refresh Tasks">
@@ -66,11 +65,6 @@
         <button onclick="toggleTheme()" class="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 text-xs hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors shadow-xs" title="Toggle Dark/Light Mode">
           <span class="dark:hidden">🌙</span>
           <span class="hidden dark:inline">☀️</span>
-        </button>
-
-        <!-- Google Connect -->
-        <button id="auth-btn" onclick="handleAuthButtonClick()" class="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-semibold shadow-sm shadow-blue-500/20 transition-all cursor-pointer">
-          <span id="auth-btn-label">Connect Google</span>
         </button>
       </div>
     </div>
@@ -236,17 +230,9 @@
 
   <!-- CORE LOGIC & PARSING -->
   <script>
-    const GOOGLE_CLIENT_ID = '948841075409-efkhae14gj3g5bf0pmld92329t3i9k6o.apps.googleusercontent.com';
-    const SCOPES = 'https://www.googleapis.com/auth/tasks';
     const APPS_SCRIPT_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyAAWmJDaHMuian_enjc2CoGWqbTJTdocp_pSxoDxoT39FqZwZOysVZVjPuUnDajnfB_A/exec';
 
-    let accessToken = localStorage.getItem('gtasks_access_token') || null;
-    let tokenExpiry = parseInt(localStorage.getItem('gtasks_token_expiry') || '0', 10);
-    let isLiveAccount = false;
     let sortOption = 'due-asc';
-    let tokenClient = null;
-    let silentRefreshTimer = null;
-
     let taskLists = [];
     let allTasks = [];
     let selectedTaskIds = new Set();
@@ -254,32 +240,12 @@
 
     let calCurrentTaskId = null;
     let calViewYear = new Date().getFullYear();
-    let calViewMonth = new Date().getMonth(); // 0-indexed
-
-    const DEMO_LISTS = [{ id: 'list-default', title: 'Team Outreach' }];
-    const DEMO_TASKS = [
-      {
-        id: 't-1',
-        listId: 'list-default',
-        title: 'Sierra Miles - 07/08/2001 - sierra@sierramilesmusic.com',
-        notes: "https://striven.milesit.com/employees/sierra\nhttps://calendar.google.com",
-        due: getTodayDateString() + 'T00:00:00.000Z',
-        status: 'needsAction'
-      },
-      {
-        id: 't-2',
-        listId: 'list-default',
-        title: 'David Smith - 11/20/1988 - david@company.com',
-        notes: "https://striven.milesit.com/employees/david\nhttps://calendar.google.com",
-        due: getTodayDateString() + 'T00:00:00.000Z',
-        status: 'needsAction'
-      }
-    ];
+    let calViewMonth = new Date().getMonth();
 
     window.addEventListener('DOMContentLoaded', async () => {
       initTheme();
       await fetchStrivenDirectory();
-      initGoogleAuthEngine();
+      await fetchAllTasks();
     });
 
     function initTheme() {
@@ -301,16 +267,14 @@
     }
 
     // ========================================================
-    // BULLETPROOF DATE UTILITIES (NO TIMEZONE DRIFT)
+    // BULLETPROOF DATE UTILITIES
     // ========================================================
 
-    // Extracts calendar "YYYY-MM-DD" from task.due without running through new Date()
     function getTaskDueDateString(dueVal) {
       if (!dueVal || typeof dueVal !== 'string') return '';
-      return dueVal.substring(0, 10); // Exactly "YYYY-MM-DD"
+      return dueVal.substring(0, 10);
     }
 
-    // Today's local calendar date as "YYYY-MM-DD"
     function getTodayDateString() {
       const now = new Date();
       const y = now.getFullYear();
@@ -319,32 +283,26 @@
       return `${y}-${m}-${d}`;
     }
 
-    // Formats a "YYYY-MM-DD" string into friendly text (e.g. "Oct 24") purely by parts
     function formatDueDateDisplay(dateStr) {
       if (!dateStr || dateStr.length < 10) return '';
       const parts = dateStr.substring(0, 10).split('-');
-      const y = parseInt(parts[0], 10);
       const m = parseInt(parts[1], 10) - 1;
       const d = parseInt(parts[2], 10);
       const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
       return `${monthNames[m]} ${d}`;
     }
 
-    // Generates the strict Google Tasks RFC 3339 timestamp at UTC midnight
     function toGoogleTasksDueTimestamp(dateStr) {
       if (!dateStr) return null;
-      const pureDate = dateStr.substring(0, 10);
-      return `${pureDate}T00:00:00.000Z`;
+      return `${dateStr.substring(0, 10)}T00:00:00.000Z`;
     }
 
-    // Calculates next business day in local calendar date "YYYY-MM-DD"
     function getNextBusinessDateString() {
       const date = new Date();
-      const day = date.getDay(); // 0 is Sun, 5 is Fri, 6 is Sat
-
-      if (day === 5) date.setDate(date.getDate() + 3);      // Fri -> Mon
-      else if (day === 6) date.setDate(date.getDate() + 2); // Sat -> Mon
-      else date.setDate(date.getDate() + 1);                 // Sun-Thu -> Next day
+      const day = date.getDay();
+      if (day === 5) date.setDate(date.getDate() + 3);
+      else if (day === 6) date.setDate(date.getDate() + 2);
+      else date.setDate(date.getDate() + 1);
 
       const y = date.getFullYear();
       const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -353,136 +311,8 @@
     }
 
     // ========================================================
-    // AUTHENTICATION & DIRECTORY
+    // APPS SCRIPT API CALLS (NO CLIENT-SIDE AUTH NEEDED)
     // ========================================================
-    function initGoogleAuthEngine() {
-      const checkGsiReady = setInterval(() => {
-        if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
-          clearInterval(checkGsiReady);
-
-          tokenClient = google.accounts.oauth2.initTokenClient({
-            client_id: GOOGLE_CLIENT_ID,
-            scope: SCOPES,
-            callback: async (tokenResponse) => {
-              if (tokenResponse && tokenResponse.access_token) {
-                applyNewToken(tokenResponse.access_token, tokenResponse.expires_in || 3599);
-                isLiveAccount = true;
-                updateAuthStatusUI(true);
-                await fetchAllGoogleData();
-              } else {
-                handleAuthFailure();
-              }
-            },
-            error_callback: (err) => {
-              console.warn('OAuth callback notice:', err);
-              if (!accessToken || Date.now() > tokenExpiry) {
-                handleAuthFailure();
-              }
-            }
-          });
-
-          const wasLoggedIn = localStorage.getItem('gtasks_logged_in') === 'true';
-
-          if (wasLoggedIn) {
-            const now = Date.now();
-            if (accessToken && now < tokenExpiry - 60000) {
-              isLiveAccount = true;
-              updateAuthStatusUI(true);
-              scheduleBackgroundRenewal((tokenExpiry - now) - 120000);
-              fetchAllGoogleData().catch(() => requestSilentLogin());
-            } else {
-              requestSilentLogin();
-            }
-          } else {
-            loadDemoData();
-          }
-        }
-      }, 100);
-    }
-
-    function applyNewToken(token, expiresInSeconds) {
-      accessToken = token;
-      tokenExpiry = Date.now() + (expiresInSeconds * 1000);
-      localStorage.setItem('gtasks_access_token', token);
-      localStorage.setItem('gtasks_token_expiry', tokenExpiry.toString());
-      localStorage.setItem('gtasks_logged_in', 'true');
-
-      const refreshDelay = Math.max((expiresInSeconds - 300) * 1000, 60000);
-      scheduleBackgroundRenewal(refreshDelay);
-    }
-
-    function scheduleBackgroundRenewal(delayMs) {
-      if (silentRefreshTimer) clearTimeout(silentRefreshTimer);
-      silentRefreshTimer = setTimeout(() => {
-        requestSilentLogin();
-      }, delayMs);
-    }
-
-    function requestSilentLogin() {
-      if (!tokenClient) return;
-      try {
-        setSyncStatus('Reconnecting...');
-        tokenClient.requestAccessToken({ prompt: '' });
-      } catch (err) {
-        console.warn('Silent login request error:', err);
-        handleAuthFailure();
-      }
-    }
-
-    function handleAuthButtonClick() {
-      if (isLiveAccount) {
-        if (confirm('Disconnect Google account and switch to demo mode?')) {
-          logoutGoogle();
-        }
-        return;
-      }
-
-      if (!tokenClient) {
-        alert('Google authentication service is still initializing. Please wait a moment.');
-        return;
-      }
-      document.getElementById('auth-btn-label').textContent = 'Connecting...';
-      tokenClient.requestAccessToken({ prompt: 'consent' });
-    }
-
-    function logoutGoogle() {
-      localStorage.removeItem('gtasks_access_token');
-      localStorage.removeItem('gtasks_token_expiry');
-      localStorage.removeItem('gtasks_logged_in');
-      accessToken = null;
-      tokenExpiry = 0;
-      isLiveAccount = false;
-      if (silentRefreshTimer) clearTimeout(silentRefreshTimer);
-      updateAuthStatusUI(false);
-      loadDemoData();
-    }
-
-    function handleAuthFailure() {
-      localStorage.removeItem('gtasks_access_token');
-      localStorage.removeItem('gtasks_token_expiry');
-      accessToken = null;
-      isLiveAccount = false;
-      updateAuthStatusUI(false);
-      loadDemoData();
-    }
-
-    function updateAuthStatusUI(connected) {
-      const authBtn = document.getElementById('auth-btn');
-      const authLabel = document.getElementById('auth-btn-label');
-      const pill = document.getElementById('connection-pill');
-
-      if (connected) {
-        authBtn.className = "px-3.5 py-1.5 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all cursor-pointer";
-        authLabel.textContent = "Disconnect";
-        pill.className = "text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/40";
-        pill.textContent = "Google Connected";
-      } else {
-        authBtn.className = "px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm shadow-blue-500/20 transition-all cursor-pointer";
-        authLabel.textContent = "Connect Google";
-        pill.className = "text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900/40";
-        pill.textContent = "Demo Mode";
-      }
-    }
 
     async function fetchStrivenDirectory() {
       try {
@@ -509,6 +339,36 @@
       } catch (err) {
         console.warn('Could not fetch Striven directory:', err);
       }
+    }
+
+    async function fetchAllTasks() {
+      setSyncStatus('Fetching...');
+      try {
+        const res = await fetch(`${APPS_SCRIPT_WEBAPP_URL}?action=getTasks`);
+        const data = await res.json();
+
+        if (data.tasks) {
+          allTasks = data.tasks;
+          taskLists = data.lists || [];
+          selectedTaskIds.clear();
+          updateActionBar();
+          setSyncStatus('Synced');
+          renderTasks();
+        } else {
+          throw new Error(data.error || 'Could not load tasks');
+        }
+      } catch (err) {
+        console.error(err);
+        setSyncStatus('Error');
+      }
+    }
+
+    async function sendAppsScriptAction(payload) {
+      return await fetch(APPS_SCRIPT_WEBAPP_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      });
     }
 
     function parseTaskTitle(title) {
@@ -576,7 +436,7 @@
       if (!dateStr) return '';
       const d = new Date(dateStr);
       if (isNaN(d.getTime())) return dateStr;
-      return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+      return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
     }
 
     function formatShortAddress(fullAddress) {
@@ -590,6 +450,7 @@
         const country = parts[3];
         return `${city}, ${state || stateZip}, ${country}`;
       } else if (parts.length === 3) {
+        const cityOrStreet = parts[0];
         const stateZip = parts[1];
         const state = stateZip.replace(/\b\d{5}(-\d{4})?\b/, '').trim();
         const country = parts[2];
@@ -600,67 +461,6 @@
 
     function generateChatMessage(firstName) {
       return `${firstName}, do you happen to have a couple minutes now? If not, just DM me when you are free.`;
-    }
-
-    async function apiRequest(endpoint, options = {}) {
-      if (!accessToken) throw new Error('No token');
-      const res = await fetch(`https://tasks.googleapis.com/tasks/v1${endpoint}`, {
-        ...options,
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-          ...(options.headers || {})
-        }
-      });
-      if (res.status === 401) {
-        requestSilentLogin();
-        throw new Error('Unauthorized');
-      }
-      if (res.status === 204) return null;
-      return await res.json();
-    }
-
-    async function fetchAllGoogleData() {
-      setSyncStatus('Fetching...');
-      try {
-        const listsData = await apiRequest('/users/@me/lists');
-        taskLists = listsData.items || [];
-
-        let fetchedTasks = [];
-        for (const list of taskLists) {
-          const tasksData = await apiRequest(`/lists/${list.id}/tasks?showCompleted=false&showHidden=false`);
-          if (tasksData.items) {
-            const listTasks = tasksData.items.map(t => ({
-              id: t.id,
-              listId: list.id,
-              title: t.title || '(Untitled Task)',
-              notes: t.notes || '',
-              due: t.due || null,
-              status: t.status
-            }));
-            fetchedTasks = fetchedTasks.concat(listTasks);
-          }
-        }
-
-        allTasks = fetchedTasks;
-        selectedTaskIds.clear();
-        updateActionBar();
-        setSyncStatus('Synced');
-        renderTasks();
-      } catch (err) {
-        console.error(err);
-        setSyncStatus('Sync Failed');
-        throw err;
-      }
-    }
-
-    function loadDemoData() {
-      taskLists = [...DEMO_LISTS];
-      allTasks = [...DEMO_TASKS];
-      selectedTaskIds.clear();
-      updateActionBar();
-      setSyncStatus('Ready');
-      renderTasks();
     }
 
     function toggleTaskSelection(taskId, event) {
@@ -681,9 +481,8 @@
       const todayStr = getTodayDateString();
       return allTasks.filter(t => {
         if (t.status === 'completed') return false;
-        if (!t.due) return true; // Tasks without due date count as due
-        const taskDueStr = getTaskDueDateString(t.due);
-        return taskDueStr <= todayStr;
+        if (!t.due) return true;
+        return getTaskDueDateString(t.due) <= todayStr;
       });
     }
 
@@ -726,7 +525,6 @@
       if (!task) return;
 
       const { fullName, firstName, email } = parseTaskTitle(task.title);
-
       if (!email) {
         alert(`Cannot send DM: No valid email address found in the task title for ${fullName}.`);
         return;
@@ -742,33 +540,18 @@
       setSyncStatus(`Sending to ${firstName}...`);
 
       try {
-        await fetch(APPS_SCRIPT_WEBAPP_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            recipients: [{
-              email: email,
-              message: generateChatMessage(firstName)
-            }]
-          })
+        await sendAppsScriptAction({
+          recipients: [{ email: email, message: generateChatMessage(firstName) }],
+          action: 'updateTask',
+          taskId: task.id,
+          listId: task.listId,
+          due: nextBusinessTimestamp
         });
       } catch (err) {
-        console.warn('Apps script notice:', err);
+        console.warn('Apps Script notification error:', err);
       }
 
       task.due = nextBusinessTimestamp;
-      if (isLiveAccount) {
-        try {
-          await apiRequest(`/lists/${task.listId}/tasks/${task.id}`, {
-            method: 'PATCH',
-            body: JSON.stringify({ due: nextBusinessTimestamp })
-          });
-        } catch (err) {
-          console.error(`Failed to reschedule task ${task.id}:`, err);
-        }
-      }
-
       selectedTaskIds.delete(taskId);
       updateActionBar();
       setSyncStatus('Synced');
@@ -795,37 +578,25 @@
       selectedTasks.forEach(task => {
         const { firstName, email } = parseTaskTitle(task.title);
         if (email) {
-          recipients.push({
-            email: email,
-            message: generateChatMessage(firstName)
-          });
+          recipients.push({ email: email, message: generateChatMessage(firstName) });
         }
       });
 
-      if (recipients.length > 0) {
-        try {
-          await fetch(APPS_SCRIPT_WEBAPP_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ recipients })
-          });
-        } catch (err) {
-          console.warn('Apps script notice:', err);
-        }
-      }
-
       for (const task of selectedTasks) {
         task.due = nextBusinessTimestamp;
-        if (isLiveAccount) {
-          try {
-            await apiRequest(`/lists/${task.listId}/tasks/${task.id}`, {
-              method: 'PATCH',
-              body: JSON.stringify({ due: nextBusinessTimestamp })
-            });
-          } catch (err) {
-            console.error(`Failed to reschedule task ${task.id}:`, err);
-          }
+        sendAppsScriptAction({
+          action: 'updateTask',
+          taskId: task.id,
+          listId: task.listId,
+          due: nextBusinessTimestamp
+        });
+      }
+
+      if (recipients.length > 0) {
+        try {
+          await sendAppsScriptAction({ recipients: recipients });
+        } catch (err) {
+          console.warn('Chat dispatch error:', err);
         }
       }
 
@@ -840,7 +611,7 @@
     }
 
     // ========================================================
-    // CALENDAR POPOVER LOGIC (STRICT CALENDAR DATES)
+    // CALENDAR POPOVER LOGIC
     // ========================================================
     function openCalendarPopover(taskId, event) {
       if (event) event.stopPropagation();
@@ -947,19 +718,17 @@
       closeCalendarPopover();
       setSyncStatus('Saving date...');
 
-      if (isLiveAccount) {
-        try {
-          await apiRequest(`/lists/${task.listId}/tasks/${task.id}`, {
-            method: 'PATCH',
-            body: JSON.stringify({ due: newDueTimestamp })
-          });
-          setSyncStatus('Synced');
-        } catch (err) {
-          console.error(err);
-          alert('Could not update due date on Google Tasks.');
-        }
-      } else {
-        setSyncStatus('Ready');
+      try {
+        await sendAppsScriptAction({
+          action: 'updateTask',
+          taskId: task.id,
+          listId: task.listId,
+          due: newDueTimestamp
+        });
+        setSyncStatus('Synced');
+      } catch (err) {
+        console.error(err);
+        alert('Could not update due date.');
       }
 
       renderTasks();
@@ -974,16 +743,16 @@
       closeCalendarPopover();
       setSyncStatus('Clearing date...');
 
-      if (isLiveAccount) {
-        try {
-          await apiRequest(`/lists/${task.listId}/tasks/${task.id}`, {
-            method: 'PATCH',
-            body: JSON.stringify({ due: null })
-          });
-          setSyncStatus('Synced');
-        } catch (err) {
-          console.error(err);
-        }
+      try {
+        await sendAppsScriptAction({
+          action: 'updateTask',
+          taskId: task.id,
+          listId: task.listId,
+          due: null
+        });
+        setSyncStatus('Synced');
+      } catch (err) {
+        console.error(err);
       }
 
       renderTasks();
@@ -1183,7 +952,7 @@
 
         taskCard.querySelector('.btn-complete').onclick = (e) => {
           e.stopPropagation();
-          completeTask(task.id, taskCard);
+          completeTask(task.id);
         };
 
         taskCard.querySelector('.btn-open-edit').onclick = (e) => {
@@ -1195,33 +964,35 @@
       });
     }
 
-    async function completeTask(taskId, cardElement) {
+    async function completeTask(taskId) {
       const task = allTasks.find(t => t.id === taskId);
       if (!task) return;
 
-      const checkbox = cardElement.querySelector('.btn-complete');
-      checkbox.classList.add('bg-blue-600', 'border-blue-600');
-      const checkMark = checkbox.querySelector('.check-mark');
-      if (checkMark) checkMark.classList.remove('opacity-0');
-      cardElement.style.opacity = '0.35';
-      cardElement.style.transform = 'scale(0.98)';
-      cardElement.style.transition = 'all 0.25s ease';
+      const cardElement = document.getElementById(`task-card-${taskId}`);
+      if (cardElement) {
+        const checkbox = cardElement.querySelector('.btn-complete');
+        checkbox.classList.add('bg-blue-600', 'border-blue-600');
+        const checkMark = checkbox.querySelector('.check-mark');
+        if (checkMark) checkMark.classList.remove('opacity-0');
+        cardElement.style.opacity = '0.35';
+        cardElement.style.transform = 'scale(0.98)';
+        cardElement.style.transition = 'all 0.25s ease';
+      }
 
       task.status = 'completed';
       selectedTaskIds.delete(taskId);
       updateActionBar();
 
       setTimeout(async () => {
-        if (isLiveAccount) {
-          try {
-            await apiRequest(`/lists/${task.listId}/tasks/${task.id}`, {
-              method: 'PATCH',
-              body: JSON.stringify({ status: 'completed' })
-            });
-          } catch (err) {
-            console.error(err);
-            task.status = 'needsAction';
-          }
+        try {
+          await sendAppsScriptAction({
+            action: 'updateTask',
+            taskId: task.id,
+            listId: task.listId,
+            status: 'completed'
+          });
+        } catch (err) {
+          console.error(err);
         }
         renderTasks();
       }, 300);
@@ -1251,7 +1022,7 @@
       } else {
         modalTitle.textContent = 'Create Follow-Up';
         document.getElementById('form-task-id').value = '';
-        document.getElementById('form-list-id').value = taskLists[0]?.id || 'list-default';
+        document.getElementById('form-list-id').value = taskLists[0]?.id || '@default';
         document.getElementById('form-due-date').value = '';
         deleteBtn.classList.add('hidden');
       }
@@ -1268,8 +1039,8 @@
       const taskId = document.getElementById('form-task-id').value;
       const title = document.getElementById('form-title').value.trim();
       const notes = document.getElementById('form-notes').value.trim();
-      const listId = document.getElementById('form-list-id').value || taskLists[0]?.id || 'list-default';
-      const dueDateVal = document.getElementById('form-due-date').value; // Exactly "YYYY-MM-DD"
+      const listId = document.getElementById('form-list-id').value || taskLists[0]?.id || '@default';
+      const dueDateVal = document.getElementById('form-due-date').value;
       const due = dueDateVal ? toGoogleTasksDueTimestamp(dueDateVal) : null;
 
       if (!title) return;
@@ -1285,44 +1056,42 @@
         task.due = due;
         task.listId = listId;
 
-        if (isLiveAccount) {
-          try {
-            await apiRequest(`/lists/${listId}/tasks/${taskId}`, {
-              method: 'PATCH',
-              body: JSON.stringify({ title, notes, due })
-            });
-            setSyncStatus('Synced');
-          } catch (err) {
-            alert('Could not update task on Google Tasks.');
-          }
+        try {
+          await sendAppsScriptAction({
+            action: 'updateTask',
+            taskId: taskId,
+            listId: listId,
+            title: title,
+            notes: notes,
+            due: due
+          });
+          setSyncStatus('Synced');
+        } catch (err) {
+          alert('Could not update task.');
         }
       } else {
-        const newTaskPayload = { title, notes, due, status: 'needsAction' };
-        if (isLiveAccount) {
-          try {
-            const res = await apiRequest(`/lists/${listId}/tasks`, {
-              method: 'POST',
-              body: JSON.stringify(newTaskPayload)
-            });
-            allTasks.unshift({
-              id: res.id,
-              listId: listId,
-              title: res.title,
-              notes: res.notes || '',
-              due: res.due || null,
-              status: res.status
-            });
-            setSyncStatus('Synced');
-          } catch (err) {
-            alert('Failed to create task.');
-          }
-        } else {
-          allTasks.unshift({
-            id: 'demo-' + Date.now(),
+        try {
+          const res = await sendAppsScriptAction({
+            action: 'createTask',
             listId: listId,
-            ...newTaskPayload
+            title: title,
+            notes: notes,
+            due: due
           });
-          setSyncStatus('Demo Mode');
+          const resData = await res.json();
+          if (resData.task) {
+            allTasks.unshift({
+              id: resData.task.id,
+              listId: listId,
+              title: resData.task.title,
+              notes: resData.task.notes || '',
+              due: resData.task.due || null,
+              status: resData.task.status || 'needsAction'
+            });
+          }
+          setSyncStatus('Synced');
+        } catch (err) {
+          alert('Failed to create task.');
         }
       }
 
@@ -1339,13 +1108,15 @@
       selectedTaskIds.delete(taskId);
       updateActionBar();
 
-      if (isLiveAccount) {
-        try {
-          await apiRequest(`/lists/${task.listId}/tasks/${taskId}`, { method: 'DELETE' });
-          setSyncStatus('Synced');
-        } catch (err) {
-          alert('Could not delete from Google Tasks.');
-        }
+      try {
+        await sendAppsScriptAction({
+          action: 'deleteTask',
+          taskId: taskId,
+          listId: task.listId
+        });
+        setSyncStatus('Synced');
+      } catch (err) {
+        alert('Could not delete from Google Tasks.');
       }
 
       renderTasks();
@@ -1362,8 +1133,7 @@
 
     async function refreshData() {
       await fetchStrivenDirectory();
-      if (isLiveAccount) fetchAllGoogleData();
-      else loadDemoData();
+      await fetchAllTasks();
     }
 
     function escapeHtml(str) {
